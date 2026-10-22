@@ -13,8 +13,8 @@ COPY . .
 # Recolectar estáticos al construir (la SECRET_KEY de acá solo vive durante el build)
 RUN SECRET_KEY=solo-build python manage.py collectstatic --noinput
 
-# Usuario sin privilegios, con el mismo UID que tu usuario del VPS (1000)
-RUN useradd -u 1000 -m app && mkdir /data && chown app:app /data
+# Usuario sin privilegios, con el mismo UID que tu usuario del VPS (1001)
+RUN useradd -u 1001 -m app && mkdir /data && chown app:app /data
 USER app
 
 EXPOSE 8000
