@@ -1,0 +1,13 @@
+{% if field.is_hidden %}{{ field }}
+{% elif field.name == 'remember' %}
+<div class="campo-check{% if field.errors %} con-error{% endif %}">
+  <label for="{{ field.id_for_label }}">{{ field }}<span>Recordarme en este dispositivo</span></label>
+</div>
+{% else %}
+<div class="campo{% if field.errors %} con-error{% endif %}">
+  <label for="{{ field.id_for_label }}">{% if field.name == 'login' or field.name == 'email' %}Correo electrónico{% elif field.name == 'email2' %}Repetir correo electrónico{% elif field.name == 'username' %}Nombre de usuario{% elif field.name == 'password' or field.name == 'password1' %}Contraseña{% elif field.name == 'password2' %}Repetir contraseña{% else %}{{ field.label }}{% endif %}</label>
+  {{ field }}
+  {% if field.help_text %}<div class="ayuda">{{ field.help_text|safe }}</div>{% endif %}
+  {% for e in field.errors %}<span class="error" role="alert">{{ e }}</span>{% endfor %}
+</div>
+{% endif %}

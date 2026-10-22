@@ -1,0 +1,25 @@
+{% extends 'account/base_entrance.html' %}
+{% block head_title %}Crear cuenta{% endblock %}
+
+{% block content %}
+<article class="ficha auth">
+  <h2>Crear cuenta</h2>
+  <p class="sub">Empezá tu propio cuaderno de recetas y precios.</p>
+
+  <form method="post" action="{% url 'account_signup' %}" class="auth-form" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="aviso-error" role="alert">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>
+    {% endif %}
+    {% for field in form %}{% include 'account/_campo.html' %}{% endfor %}
+    {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+    <div class="auth-acciones">
+      <button class="btn" type="submit">Crear mi cuenta</button>
+    </div>
+  </form>
+
+  {% include 'account/_google.html' %}
+
+  <p class="auth-pie">¿Ya tenés cuenta? <a href="{% url 'account_login' %}">Iniciar sesión</a></p>
+</article>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'account/base_entrance.html' %}
+{% block head_title %}Cerrar sesión{% endblock %}
+
+{% block content %}
+<article class="ficha auth auth-centro">
+  <h2>¿Cerrar sesión?</h2>
+  <p class="auth-texto">Tu cuaderno queda guardado. Podés volver a entrar cuando quieras.</p>
+  <form method="post" action="{% url 'account_logout' %}" class="auth-form">
+    {% csrf_token %}
+    {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+    <div class="auth-acciones centro">
+      <a class="btn ghost" href="{% url 'recetas:index' %}">Volver</a>
+      <button class="btn" type="submit">Cerrar sesión</button>
+    </div>
+  </form>
+</article>
+{% endblock %}

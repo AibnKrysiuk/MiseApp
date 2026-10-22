@@ -1,0 +1,11 @@
+{% extends 'recetas/base.html' %}
+{% load static %}
+{# Reemplaza el layout de allauth: todas las pantallas account/* (también las que no personalizamos) usan la libreta. #}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'recetas/css/auth.css' %}">{% endblock %}
+{% block titulo %}{% block head_title %}{% endblock %} · Mise{% endblock %}
+{% block clase_cuaderno %} solo{% endblock %}
+{% block barra_lateral %}{% endblock %}
+{% block contenido %}
+<a class="marca marca-centro" href="{% url 'recetas:index' %}">Mise<small>agenda de cocina</small></a>
+{% block content %}{% endblock %}
+{% endblock %}

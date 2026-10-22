@@ -1,0 +1,26 @@
+{% extends 'account/base_entrance.html' %}
+{% block head_title %}Iniciar sesión{% endblock %}
+
+{% block content %}
+<article class="ficha auth">
+  <h2>Iniciar sesión</h2>
+  <p class="sub">Abrí tu agenda de cocina.</p>
+
+  <form method="post" action="{% url 'account_login' %}" class="auth-form" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="aviso-error" role="alert">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>
+    {% endif %}
+    {% for field in form %}{% include 'account/_campo.html' %}{% endfor %}
+    {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+    <div class="auth-acciones">
+      <button class="btn" type="submit">Entrar</button>
+      <a class="enlace-suave" href="{% url 'account_reset_password' %}">¿Olvidaste tu contraseña?</a>
+    </div>
+  </form>
+
+  {% include 'account/_google.html' %}
+
+  <p class="auth-pie">¿Primera vez por acá? <a href="{% url 'account_signup' %}">Crear una cuenta</a></p>
+</article>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'account/base_entrance.html' %}
+{% block head_title %}Revisá tu correo{% endblock %}
+
+{% block content %}
+<article class="ficha auth auth-centro">
+  <svg class="sobre" viewBox="0 0 64 48" width="72" height="54" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="3" y="5" width="58" height="38" rx="4"/><path d="M5 10l27 20 27-20"/>
+  </svg>
+  <h2>Revisá tu correo</h2>
+  <p class="auth-texto">Te enviamos un mensaje con un enlace para confirmar tu dirección. Abrilo para activar tu cuenta.</p>
+  <p class="auth-nota">Si no lo ves en unos minutos, mirá en la carpeta de spam.</p>
+  <p class="auth-pie"><a href="{% url 'account_login' %}">Volver a iniciar sesión</a></p>
+</article>
+{% endblock %}
