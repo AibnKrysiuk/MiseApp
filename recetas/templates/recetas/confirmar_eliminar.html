@@ -1,0 +1,12 @@
+{% extends 'recetas/base.html' %}
+{% block contenido %}
+<section class="ficha confirmar">
+  <h2>¿Eliminar «{{ objeto }}»?</h2>
+  <p class="desc">{{ aviso }} Esta acción no se puede deshacer.</p>
+  <form method="post" class="acciones-fila">
+    {% csrf_token %}
+    <a class="btn ghost" href="{% if pk %}{% url volver pk %}{% else %}{% url volver %}{% endif %}">Cancelar</a>
+    <button class="btn peligro" type="submit">Eliminar</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,39 @@
+.verificar-form{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin:22px 0 30px}
+.verificar-form .campo{flex:1;min-width:260px}
+.tarjeta-producto{border:1px solid var(--line,#e4ddd2);border-radius:4px 12px 4px 12px;background:var(--paper,#fcfbfa);
+  box-shadow:0 8px 18px -12px rgba(60,40,20,.3);padding:22px;animation:abrir .4s ease both}
+.cab{display:flex;gap:18px;align-items:center}
+.luz{flex:none;width:44px;height:44px;border-radius:50%;box-shadow:inset 0 -4px 8px rgba(0,0,0,.18)}
+.resultado-verde .luz{background:var(--salvia,#78866b)}
+.resultado-rojo .luz{background:var(--rojo,#a8331a)}
+.resultado-amarillo .luz{background:#d9a441}
+.veredicto{font-family:var(--serif,Georgia,serif);font-size:1.5rem;font-weight:700}
+.mensaje{font-family:var(--sans,system-ui,sans-serif);font-size:.92rem;color:var(--ink-soft,#6b6660);margin-top:4px}
+.datos{display:grid;grid-template-columns:110px 1fr;gap:10px 16px;margin:22px 0 0;font-family:var(--sans,system-ui,sans-serif);font-size:.9rem}
+.datos dt{color:var(--ink-soft,#6b6660);font-weight:500}
+.datos dd{margin:0;word-break:break-all}
+.url-limpia{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.84rem;background:rgba(120,134,107,.12);padding:6px 10px;border-radius:6px}
+.producto{margin-top:24px;padding-top:22px;border-top:1px dashed var(--line,#e4ddd2)}
+.prod-nombre{display:block;font-family:var(--serif,Georgia,serif);font-size:1.6rem;font-weight:700;line-height:1.2;margin:0 0 10px}
+.precio-fila{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.precio{font-family:var(--sans,system-ui,sans-serif);font-size:1.7rem;font-weight:600;color:var(--terracota,#c85a32)}
+.precio-nd{font-size:1rem;color:var(--ink-soft,#6b6660);font-weight:500}
+.precio-lista{font-family:var(--sans,system-ui,sans-serif);color:var(--ink-soft,#6b6660);text-decoration:line-through}
+.badge{font-family:var(--sans,system-ui,sans-serif);font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--line,#e4ddd2);color:var(--ink-soft,#6b6660)}
+.badge-oferta{background:var(--terracota,#c85a32);border-color:var(--terracota,#c85a32);color:#fff}
+.oferta-hasta{font-family:var(--sans,system-ui,sans-serif);font-size:.88rem;color:var(--terracota,#c85a32);margin:8px 0 0}
+.rotulo{font-family:var(--sans,system-ui,sans-serif);font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft,#6b6660);margin:20px 0 6px}
+.prod-desc{line-height:1.7;font-size:1rem;max-width:62ch}
+.fuente{font-family:var(--sans,system-ui,sans-serif);font-size:.76rem;color:var(--ink-soft,#6b6660);margin-top:18px}
+.aviso{font-family:var(--sans,system-ui,sans-serif);font-size:.9rem;margin-top:22px;padding:12px 14px;border-left:3px solid #d9a441;background:rgba(217,164,65,.1);border-radius:0 8px 8px 0}
+
+/* Formulario de guardado */
+.guardar-form{margin-top:28px;padding:22px 24px 20px;border:1px solid var(--line,#e4ddd2);border-left:3px solid var(--terracota,#c85a32);
+  border-radius:4px 12px 4px 12px;background:var(--paper-2,#f6f2ec);box-shadow:0 8px 18px -14px rgba(60,40,20,.3);
+  display:flex;flex-direction:column;gap:16px;animation:abrir .4s ease both}
+.guardar-form h3{margin:0}
+.guardar-form .sub{margin:-8px 0 0}
+.guardar-form input[type=text],.guardar-form input[type=number]{background:transparent}
+.guardar-fila{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.guardar-form .acciones-fila{margin:6px 0 0}
+@media(max-width:520px){.guardar-fila{grid-template-columns:1fr}}

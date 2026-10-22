@@ -1,0 +1,54 @@
+{% extends 'recetas/base.html' %}
+{% block contenido %}
+<nav class="barra" aria-label="Vista">
+  <a class="tab" href="{% url 'recetas:index' %}?vista=indice"{% if vista == 'indice' %} aria-current="true"{% endif %}>Índice</a>
+  <a class="tab" href="{% url 'recetas:index' %}"{% if vista == 'detalle' %} aria-current="true"{% endif %}>Receta</a>
+</nav>
+
+{% if vista == 'indice' %}
+  <div class="tarjetas">
+    {% for r in recetas %}
+    <a class="tarjeta" href="{% url 'recetas:detalle' r.pk %}">
+      <h4>{{ r.titulo }}</h4>
+      <div class="sub">{% if r.categoria %}{{ r.categoria }} · {% endif %}{{ r.porciones }} porción{{ r.porciones|pluralize:"es" }}</div>
+      <p>{{ r.descripcion|default:"Sin descripción." }}</p>
+    </a>
+    {% empty %}
+    <p class="vacio">Tu cuaderno está vacío. <a href="{% url 'recetas:crear' %}">Agregá la primera receta</a>.</p>
+    {% endfor %}
+  </div>
+
+{% elif receta %}
+  <article class="ficha" data-receta="{{ receta.pk }}">
+    <h2>{{ receta.titulo }}</h2>
+    <div class="sub">
+      {% if receta.categoria %}{{ receta.categoria }} · {% endif %}{{ receta.porciones }} porción{{ receta.porciones|pluralize:"es" }}
+      · preparación {{ receta.tiempo_preparacion_min }} min · cocción {{ receta.tiempo_coccion_min }} min
+    </div>
+    <div class="acciones-fila">
+      <a class="btn ghost" href="{% url 'recetas:editar' receta.pk %}">Editar</a>
+      <a class="btn peligro" href="{% url 'recetas:eliminar' receta.pk %}">Eliminar</a>
+    </div>
+    {% if receta.descripcion %}<p class="desc">{{ receta.descripcion|linebreaksbr }}</p>{% endif %}
+    <div class="cols">
+      <section><h3>Ingredientes <span class="prog" data-prog="i"></span></h3>
+        <ul class="checks">
+          {% for d in receta.ingredientes_detalle.all %}
+          <li><label><input type="checkbox" data-k="i{{ d.pk }}"><span class="caja"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span>
+            <span class="txt">{{ d.ingrediente.nombre }}</span><span class="cant">{{ d.cantidad|floatformat:"-2" }} {{ d.unidad_medida }}</span></label></li>
+          {% empty %}<li class="vacio">Sin ingredientes cargados.</li>{% endfor %}
+        </ul></section>
+      <section><h3>Preparación <span class="prog" data-prog="p"></span></h3>
+        <ul class="checks pasos">
+          {% for p in receta.pasos.all %}
+          <li><label><input type="checkbox" data-k="p{{ p.pk }}"><span class="caja"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span>
+            <span class="num">{{ p.numero_paso }}.</span><span class="txt">{{ p.instruccion }}</span></label></li>
+          {% empty %}<li class="vacio">Sin pasos cargados.</li>{% endfor %}
+        </ul></section>
+    </div>
+  </article>
+
+{% else %}
+  <p class="vacio">Tu cuaderno está vacío. <a href="{% url 'recetas:crear' %}">Agregá la primera receta</a>.</p>
+{% endif %}
+{% endblock %}

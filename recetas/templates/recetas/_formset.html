@@ -1,0 +1,6 @@
+{{ formset.management_form }}
+<div class="filas" data-prefix="{{ formset.prefix }}">
+  {% for f in formset %}{% include 'recetas/_fila.html' with f=f %}{% endfor %}
+</div>
+<template id="tpl-{{ formset.prefix }}">{% include 'recetas/_fila.html' with f=formset.empty_form %}</template>
+<button type="button" class="btn ghost" data-agregar="{{ formset.prefix }}">{{ boton }}</button>

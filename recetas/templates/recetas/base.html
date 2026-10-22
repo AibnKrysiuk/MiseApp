@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}Mise · Agenda de cocina{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'recetas/css/styles.css' %}">
+</head>
+<body>
+<div class="cuaderno">
+  <aside class="indice" aria-label="Índice de recetas">
+    <a class="marca" href="{% url 'recetas:index' %}">Mise<small>agenda de cocina</small></a>
+    <ul class="lista">
+      {% for r in indice_recetas %}
+      <li><a href="{% url 'recetas:detalle' r.pk %}"{% if receta and receta.pk == r.pk %} aria-current="true"{% endif %}>{{ r.titulo }}</a></li>
+      {% empty %}
+      <li class="vacio">Todavía no hay recetas.</li>
+      {% endfor %}
+    </ul>
+    <div class="acciones-col">
+      <a class="btn" href="{% url 'recetas:crear' %}">Nueva receta</a>
+      <a class="btn ghost" href="{% url 'recetas:ingredientes' %}">Ingredientes</a>
+      <a class="btn ghost" href="{% url 'recetas:verificar_url' %}">Semáforo de URLs</a>
+    </div>
+  </aside>
+  <main class="pagina">
+    {% if messages %}
+    <ul class="mensajes" role="status">{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% block contenido %}{% endblock %}
+  </main>
+</div>
+<script src="{% static 'recetas/js/mise.js' %}"></script>
+</body>
+</html>

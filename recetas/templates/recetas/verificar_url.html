@@ -1,0 +1,116 @@
+{% extends 'recetas/base.html' %}
+{% load static l10n %}
+{% block titulo %}Semáforo de URLs · Mise{% endblock %}
+
+{% block contenido %}
+<link rel="stylesheet" href="{% static 'recetas/css/verificar_url.css' %}">
+
+<section class="ficha semaforo-pagina">
+  <h2>Semáforo de URLs</h2>
+  <p class="sub">Probá si un sitio deja que el bot consulte los precios de un producto.</p>
+
+  <form method="post" class="verificar-form" novalidate>
+    {% csrf_token %}
+    <div class="campo{% if error %} con-error{% endif %}">
+      <label for="url">URL del producto</label>
+      <input type="text" id="url" name="url" value="{{ url_ingresada }}"
+             placeholder="https://www.ejemplo.com/producto/leche-1l" autocomplete="off" inputmode="url">
+      {% if error %}<span class="error" role="alert">{{ error }}</span>{% endif %}
+    </div>
+    <button type="submit" class="btn">Verificar</button>
+  </form>
+
+  {% if semaforo %}
+  <article class="tarjeta-producto resultado-{{ color }}" role="status">
+    <header class="cab">
+      <div class="luz" aria-hidden="true"></div>
+      <div>
+        <div class="veredicto">{{ semaforo }}</div>
+        <p class="mensaje">{{ mensaje }}</p>
+      </div>
+    </header>
+
+    <dl class="datos">
+      <dt>Dominio</dt><dd>{{ dominio }}</dd>
+      <dt>URL limpia</dt><dd class="url-limpia">{{ url_limpia }}</dd>
+      <dt>Código</dt><dd>{{ codigo }}</dd>
+    </dl>
+
+    {% if datos %}
+      {% if datos.fuente %}
+      <div class="producto">
+        <h3 class="prod-nombre">{{ datos.nombre|default:"Nombre no detectado" }}</h3>
+
+        <div class="precio-fila">
+          {% if datos.precio is not None %}
+            <span class="precio">{{ datos.moneda|default:"$" }} {{ datos.precio|floatformat:"2g" }}</span>
+            {% if datos.en_oferta %}
+              <span class="precio-lista">{{ datos.moneda|default:"$" }} {{ datos.precio_lista|floatformat:"2g" }}</span>
+              <span class="badge badge-oferta">En oferta</span>
+            {% else %}
+              <span class="badge">Sin oferta detectada</span>
+            {% endif %}
+          {% else %}
+            <span class="precio precio-nd">Precio no detectado</span>
+          {% endif %}
+        </div>
+
+        {% if datos.en_oferta and datos.oferta_hasta %}
+        <p class="oferta-hasta">Oferta válida hasta el {{ datos.oferta_hasta|date:"d/m/Y" }}</p>
+        {% endif %}
+
+        {% if datos.descripcion %}
+        <h4 class="rotulo">Descripción</h4>
+        <p class="prod-desc">{{ datos.descripcion|truncatechars:500 }}</p>
+        {% endif %}
+
+        <p class="fuente">Datos leídos desde {% if datos.fuente == 'json-ld' %}el marcado estructurado (JSON-LD){% else %}metadatos de la página{% endif %}.</p>
+      </div>
+      {% else %}
+      <p class="aviso">{{ datos.error|default:"No se pudieron detectar datos del producto." }}</p>
+      {% endif %}
+    {% elif color != 'verde' %}
+      <p class="aviso">No se leyeron datos del producto porque el sitio no respondió con acceso exitoso.</p>
+    {% endif %}
+  </article>
+
+  {% if datos and datos.fuente %}
+  <form method="post" class="guardar-form" aria-labelledby="guardar-titulo">
+    {% csrf_token %}
+    <h3 id="guardar-titulo">Seguir este ingrediente</h3>
+    <p class="sub">Guardalo con tu propio nombre y la cantidad que trae el envase.</p>
+
+    <div class="campo">
+      <label for="nombre_personalizado">Nombre personalizado</label>
+      <input type="text" id="nombre_personalizado" name="nombre_personalizado"
+             value="{{ datos.nombre|default_if_none:'' }}" maxlength="150" autocomplete="off" required>
+    </div>
+
+    <div class="guardar-fila">
+      <div class="campo">
+        <label for="cantidad">Cantidad</label>
+        <input type="number" id="cantidad" name="cantidad" value="1" min="0" step="any" inputmode="decimal" required>
+      </div>
+      <div class="campo">
+        <label for="unidad">Unidad</label>
+        <input type="text" id="unidad" name="unidad" value="unidades" list="lista-unidades" maxlength="20" autocomplete="off" required>
+        <datalist id="lista-unidades">
+          <option value="lt"><option value="ml"><option value="kg"><option value="g"><option value="unidades">
+        </datalist>
+      </div>
+    </div>
+
+    <input type="hidden" name="url_limpia" value="{{ url_limpia }}">
+    <input type="hidden" name="precio" value="{% if datos.precio is not None %}{{ datos.precio|unlocalize }}{% endif %}">
+    <input type="hidden" name="descripcion" value="{{ datos.descripcion|default_if_none:'' }}">
+    <input type="hidden" name="en_oferta" value="{% if datos.en_oferta %}1{% endif %}">
+    <input type="hidden" name="fecha_fin_oferta" value="{% if datos.en_oferta and datos.oferta_hasta %}{{ datos.oferta_hasta|date:'Y-m-d' }}{% endif %}">
+
+    <div class="acciones-fila fin">
+      <button type="submit" name="guardar_ingrediente" value="1" class="btn">Guardar en mis Ingredientes Seguidos</button>
+    </div>
+  </form>
+  {% endif %}
+  {% endif %}
+</section>
+{% endblock %}

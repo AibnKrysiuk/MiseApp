@@ -1,0 +1,26 @@
+{% extends 'recetas/base.html' %}
+{% block titulo %}{% if receta %}Editar{% else %}Nueva{% endif %} receta · Mise{% endblock %}
+{% block contenido %}
+<form method="post" class="ficha formulario" novalidate>
+  {% csrf_token %}
+  <h2>{% if receta %}Editar receta{% else %}Nueva receta{% endif %}</h2>
+  {{ form.non_field_errors }}
+  <div class="grid-form">
+    {% for c in form %}
+    <div class="campo{% if c.errors %} con-error{% endif %}{% if c.name == 'titulo' or c.name == 'descripcion' %} ancho{% endif %}">
+      <label for="{{ c.id_for_label }}">{{ c.label }}</label>{{ c }}
+      {% for e in c.errors %}<span class="error">{{ e }}</span>{% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <h3>Ingredientes</h3>
+  {% include 'recetas/_formset.html' with formset=ingredientes boton='Agregar ingrediente' %}
+  <p class="nota">¿Falta uno en la lista? <a href="{% url 'recetas:ingredientes' %}">Creálo en Ingredientes</a>.</p>
+  <h3>Pasos</h3>
+  {% include 'recetas/_formset.html' with formset=pasos boton='Agregar paso' %}
+  <div class="acciones-fila fin">
+    <a class="btn ghost" href="{% if receta %}{% url 'recetas:detalle' receta.pk %}{% else %}{% url 'recetas:index' %}{% endif %}">Cancelar</a>
+    <button class="btn" type="submit">Guardar receta</button>
+  </div>
+</form>
+{% endblock %}

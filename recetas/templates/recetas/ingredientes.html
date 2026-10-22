@@ -1,0 +1,109 @@
+{% extends 'recetas/base.html' %}
+{% load static l10n %}
+{% block titulo %}Ingredientes · Mise{% endblock %}
+
+{% block contenido %}
+<link rel="stylesheet" href="{% static 'recetas/css/ingredientes.css' %}">
+
+<section class="ficha">
+  <h2>Ingredientes</h2>
+
+  <div class="barra" role="tablist" aria-label="Tipo de ingredientes">
+    <button type="button" class="tab" role="tab" id="tab-recetas" data-panel="recetas"
+            aria-controls="panel-recetas" aria-selected="true">De recetas <span class="cuenta">{{ lista|length }}</span></button>
+    <button type="button" class="tab" role="tab" id="tab-seguidos" data-panel="seguidos"
+            aria-controls="panel-seguidos" aria-selected="false" tabindex="-1">Seguidos · precios <span class="cuenta">{{ ingredientes_seguidos|length }}</span></button>
+  </div>
+
+  <!-- 1) Ingredientes de recetas -->
+  <div id="panel-recetas" role="tabpanel" aria-labelledby="tab-recetas">
+    <p class="sub">{{ lista|length }} en total</p>
+    <form method="post" class="inline-form" novalidate>
+      {% csrf_token %}
+      <div class="campo{% if form.nombre.errors %} con-error{% endif %}">
+        <label for="{{ form.nombre.id_for_label }}">{% if editando %}Renombrar «{{ editando.nombre }}»{% else %}Nuevo ingrediente{% endif %}</label>
+        {{ form.nombre }}
+        {% for e in form.nombre.errors %}<span class="error">{{ e }}</span>{% endfor %}
+      </div>
+      <button class="btn" type="submit">{% if editando %}Guardar cambios{% else %}Agregar{% endif %}</button>
+      {% if editando %}<a class="btn ghost" href="{% url 'recetas:ingredientes' %}">Cancelar</a>{% endif %}
+    </form>
+    <ul class="checks tabla">
+      {% for i in lista %}
+      <li class="fila-ing">
+        <span class="txt-fijo">{{ i.nombre }}</span>
+        <span class="cant">{{ i.usos }} receta{{ i.usos|pluralize }}</span>
+        <a href="{% url 'recetas:ingrediente_editar' i.pk %}">Editar</a>
+        <a class="rojo" href="{% url 'recetas:ingrediente_eliminar' i.pk %}">Eliminar</a>
+      </li>
+      {% empty %}<li class="vacio">Todavía no cargaste ingredientes.</li>{% endfor %}
+    </ul>
+  </div>
+
+  <!-- 2) Ingredientes seguidos (precios de supermercado) -->
+  <div id="panel-seguidos" role="tabpanel" aria-labelledby="tab-seguidos" hidden>
+    <div class="seg-cabecera">
+      <p class="sub">{{ ingredientes_seguidos|length }} producto{{ ingredientes_seguidos|length|pluralize }} en seguimiento</p>
+      <a class="btn ghost" href="{% url 'recetas:verificar_url' %}">Seguir otro producto</a>
+    </div>
+
+    <ul class="seguidos">
+      {% for s in ingredientes_seguidos %}
+      <li class="seguido">
+        <div class="seg-datos">
+          <h3 class="seg-nombre">{{ s.nombre }}</h3>
+          <div class="seg-meta">
+            <span class="chip">{{ s.cantidad|floatformat:"-2" }} {{ s.unidad }}</span>
+            {% if s.en_oferta %}
+              <span class="chip chip-oferta">En oferta{% if s.fecha_fin_oferta %} hasta {{ s.fecha_fin_oferta|date:"d/m/Y" }}{% endif %}</span>
+            {% endif %}
+            <span class="actualizado">
+              {% if s.ultima_actualizacion %}Actualizado hace {{ s.ultima_actualizacion|timesince }}{% else %}Todavía sin revisar{% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="seg-precio-col">
+          {% if s.precio_actual is not None %}
+            <span class="seg-precio">$ {{ s.precio_actual|floatformat:"2g" }}</span>
+          {% else %}
+            <span class="seg-precio sin-precio">Sin precio</span>
+          {% endif %}
+          <a class="seg-link" href="{{ s.url }}" target="_blank" rel="noopener noreferrer">Ver en el sitio ↗</a>
+        </div>
+      </li>
+      {% empty %}
+      <li class="vacio">Todavía no seguís ningún producto. Verificá una URL en el <a href="{% url 'recetas:verificar_url' %}">semáforo</a> y guardala acá.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<noscript><style>#panel-seguidos[hidden]{display:block}.barra[role=tablist]{display:none}</style></noscript>
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  var paneles = document.querySelectorAll('[role="tabpanel"]');
+  function activar(id, enfocar) {
+    tabs.forEach(function (t) {
+      var on = t.dataset.panel === id;
+      t.setAttribute('aria-selected', on);
+      t.tabIndex = on ? 0 : -1;
+      if (on && enfocar) t.focus();
+    });
+    paneles.forEach(function (p) { p.hidden = p.id !== 'panel-' + id; });
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () {
+      activar(t.dataset.panel);
+      history.replaceState(null, '', '#' + t.dataset.panel);
+    });
+    t.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var sig = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+      activar(sig.dataset.panel, true);
+    });
+  });
+  activar(location.hash === '#seguidos' ? 'seguidos' : 'recetas');
+})();
+</script>
+{% endblock %}
