@@ -8,6 +8,7 @@ import socket
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse
+from django.contrib.auth.decorators import login_required
 
 from .forms import IngredienteForm, IngredienteFormSet, PasoFormSet, RecetaForm
 from .models import Ingrediente, IngredienteSeguido, Receta
@@ -24,7 +25,7 @@ def index(request, pk=None):
     receta = get_object_or_404(qs, pk=pk) if pk else qs.order_by('titulo').first()
     return render(request, 'recetas/index.html', {'receta': receta, 'vista': 'detalle'})
 
-
+@login_required
 def receta_form(request, pk=None):
     """Crea (pk=None) o edita una receta junto con sus ingredientes y pasos."""
     receta = get_object_or_404(Receta, pk=pk) if pk else None
@@ -44,7 +45,7 @@ def receta_form(request, pk=None):
         'form': form, 'ingredientes': ingredientes, 'pasos': pasos, 'receta': receta,
     })
 
-
+@login_required
 def receta_eliminar(request, pk):
     receta = get_object_or_404(Receta, pk=pk)
     if request.method == 'POST':
@@ -57,7 +58,7 @@ def receta_eliminar(request, pk):
         'aviso': 'Se borrarán también sus ingredientes y pasos.',
     })
 
-
+@login_required
 def ingredientes(request, pk=None):
     """Lista, crea y edita ingredientes en la misma página."""
     editando = get_object_or_404(Ingrediente, pk=pk) if pk else None
@@ -69,7 +70,7 @@ def ingredientes(request, pk=None):
     lista = Ingrediente.objects.annotate(usos=Count('ingredientereceta')).order_by('nombre')
     return render(request, 'recetas/ingredientes.html', {'form': form, 'lista': lista, 'editando': editando})
 
-
+@login_required
 def ingrediente_eliminar(request, pk):
     ing = get_object_or_404(Ingrediente, pk=pk)
     usos = ing.ingredientereceta_set.count()
@@ -107,8 +108,10 @@ def _a_decimal(texto):
         return None
     return valor if valor.is_finite() else None
 
-
 def _guardar_ingrediente_seguido(request):
+    if not request.user.is_authenticated:
+        messages.warning(request, 'Tenés que iniciar sesión o registrarte para guardar ingredientes seguidos.')
+        return redirect('login')
     """Valida el formulario de guardado y crea (o actualiza, si la URL ya existe) el ingrediente seguido."""
     p = request.POST
     nombre = p.get('nombre_personalizado', '').strip()[:150]
@@ -189,7 +192,7 @@ def verificar_url(request):
                             contexto['datos'] = extraer_datos_producto(analisis['url_limpia'])
  
     return render(request, 'recetas/verificar_url.html', contexto)
-
+@login_required
 def ingredientes(request, pk=None):
     """Lista, crea y edita ingredientes de recetas y consulta los ingredientes seguidos."""
     editando = get_object_or_404(Ingrediente, pk=pk) if pk else None

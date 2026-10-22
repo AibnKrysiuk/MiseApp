@@ -1,0 +1,14 @@
+services:
+  mise:
+    build: .
+    container_name: mise-app
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/data
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
