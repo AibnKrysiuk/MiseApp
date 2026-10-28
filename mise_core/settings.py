@@ -78,7 +78,7 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if not DEBUG else 'http'
 
 # Redirecciones tras el login/logout exitoso
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'recetas:index'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
 
