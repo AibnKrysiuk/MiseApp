@@ -20,6 +20,9 @@ a{color:var(--terracota)}
 .lista a:hover{padding-left:12px;color:var(--terracota)}
 .lista a[aria-current="true"]{color:var(--terracota);font-style:italic}
 .acciones-col{display:flex;flex-direction:column;gap:10px}
+.acciones-col .sep{border:none;border-top:1px dashed var(--line);margin:6px 0}
+/* Opción activa de la barra lateral */
+.acciones-col .btn[aria-current="page"]{background:rgba(200,90,50,.12);font-weight:600}
 .btn{display:inline-block;text-align:center;text-decoration:none;font-family:var(--sans);font-weight:500;font-size:.9rem;cursor:pointer;border-radius:999px;
   padding:10px 20px;border:1.5px solid var(--terracota);background:var(--terracota);color:#fff;transition:transform .15s,box-shadow .2s,background .2s}
 .btn:hover{box-shadow:0 4px 12px -3px rgba(200,90,50,.5);transform:translateY(-1px)}
@@ -32,9 +35,19 @@ a{color:var(--terracota)}
 .pagina::before{content:"";position:absolute;left:clamp(10px,2.4vw,30px);top:0;bottom:0;width:1px;background:var(--rule)}
 .mensajes{list-style:none;padding:0;margin-bottom:22px}
 .mensajes li{font-family:var(--sans);font-size:.9rem;background:rgba(120,134,107,.15);border-left:3px solid var(--salvia);padding:10px 14px;border-radius:0 8px 8px 0}
-.barra{display:flex;gap:8px;margin-bottom:28px}
-.tab{font-family:var(--sans);font-size:.85rem;font-weight:500;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);text-decoration:none}
-.tab[aria-current="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+[hidden]{display:none!important}
+/* Marcadores de agenda: solapas separadoras por categoría */
+.barra{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px;margin-bottom:28px;border-bottom:1.5px solid var(--line)}
+.tab{--c:var(--ink-soft);font-family:var(--sans);font-size:.85rem;font-weight:500;padding:9px 18px 8px;border:1px solid var(--line);border-bottom:none;
+  border-radius:10px 10px 0 0;background:var(--paper-2);color:var(--ink-soft);text-decoration:none;box-shadow:inset 0 4px 0 var(--c);
+  transform:translateY(4px);transition:transform .2s,color .2s,background .2s}
+.tab:hover{transform:translateY(1px);color:var(--ink)}
+.tab[aria-current="true"]{background:var(--paper);color:var(--ink);font-weight:600;transform:none;padding-bottom:12px;margin-bottom:-1.5px}
+.tab.todas{--c:var(--ink)}
+.tab:nth-child(4n+2){--c:var(--terracota)}
+.tab:nth-child(4n+3){--c:var(--salvia)}
+.tab:nth-child(4n+4){--c:#d0a03f}
+.tab:nth-child(4n+5){--c:#6d8b9c}
 .ficha{animation:abrir .45s ease both;background:var(--paper)}
 @keyframes abrir{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .ficha h2{font-family:var(--serif);font-size:clamp(2.2rem,5vw,3.4rem);line-height:1.05;font-weight:700;margin-bottom:6px}
@@ -66,6 +79,23 @@ input:checked ~ .txt{background-size:100% 1.5px;opacity:.45}
 .tarjeta h4{font-family:var(--serif);font-size:1.5rem}
 .tarjeta p{font-size:.92rem;line-height:1.6;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .tarjeta .sub{margin:0}
+.tarjetas .vacio{grid-column:1/-1}
+/* Reloj siempre visible */
+.reloj{padding:14px 16px;border:1px dashed var(--line);border-radius:4px 12px 4px 12px;background:var(--paper);text-align:center}
+.reloj-hora{font-family:var(--serif);font-size:2.3rem;font-weight:700;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+.reloj-hora small{font-family:var(--sans);font-size:.85rem;font-weight:500;color:var(--terracota);margin-left:2px}
+.reloj-fecha{font-style:italic;font-size:.9rem;color:var(--ink-soft);margin-top:8px}
+.reloj-fecha::first-letter{text-transform:uppercase}
+/* Herramientas (desplegable) */
+.herramientas summary{display:block;list-style:none}
+.herramientas summary::-webkit-details-marker{display:none}
+.herramientas summary::after{content:"";display:inline-block;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);margin-left:10px;transition:transform .2s}
+.herramientas[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+.submenu{list-style:none;padding:4px 0 0 14px;margin:8px 0 0 16px;border-left:2px solid var(--rule);display:flex;flex-direction:column}
+.submenu a{display:block;padding:9px 6px;border-bottom:1px solid var(--line);font-family:var(--sans);font-size:.88rem;color:var(--ink);text-decoration:none;transition:padding .2s,color .2s}
+.submenu a:hover{padding-left:12px;color:var(--terracota)}
+.submenu li:last-child a{border-bottom:none}
+.submenu a[aria-current="page"]{color:var(--terracota);font-style:italic}
 /* Formularios */
 .grid-form{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
 .campo{display:flex;flex-direction:column;gap:6px}

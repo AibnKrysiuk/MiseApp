@@ -11,19 +11,40 @@ from urllib.parse import urlparse
 from django.contrib.auth.decorators import login_required
 
 from .forms import IngredienteForm, IngredienteFormSet, PasoFormSet, RecetaForm
-from .models import Ingrediente, IngredienteSeguido, Receta
+from .models import Ingrediente, IngredienteSeguido, Receta, Categoria
 from .utils import analizar_y_limpiar_url, extraer_datos_producto, probar_semaforo_url
 
 
 
 def index(request, pk=None):
-    """Índice (tarjetas) o detalle de una receta."""
-    recetas = Receta.objects.select_related('categoria').order_by('titulo')
-    if request.GET.get('vista') == 'indice':
-        return render(request, 'recetas/index.html', {'recetas': recetas, 'vista': 'indice'})
-    qs = Receta.objects.prefetch_related('pasos', 'ingredientes_detalle__ingrediente')
-    receta = get_object_or_404(qs, pk=pk) if pk else qs.order_by('titulo').first()
-    return render(request, 'recetas/index.html', {'receta': receta, 'vista': 'detalle'})
+    """Índice (tarjetas, con filtro por categoría) por defecto, o detalle si viene un pk."""
+    categorias = Categoria.objects.order_by('nombre')
+
+    if pk is None:
+        recetas = Receta.objects.select_related('categoria').order_by('titulo')
+
+        # ?categoria=<pk> filtra las tarjetas; si no es un número válido, se ignora
+        try:
+            categoria_activa = int(request.GET.get('categoria', ''))
+        except ValueError:
+            categoria_activa = None
+        if categoria_activa:
+            recetas = recetas.filter(categoria_id=categoria_activa)
+
+        return render(request, 'recetas/index.html', {
+            'recetas': recetas,
+            'vista': 'indice',
+            'categorias': categorias,
+            'categoria_activa': categoria_activa,
+        })
+
+    qs = Receta.objects.select_related('categoria').prefetch_related('pasos', 'ingredientes_detalle__ingrediente')
+    receta = get_object_or_404(qs, pk=pk)
+    return render(request, 'recetas/index.html', {
+        'receta': receta,
+        'vista': 'detalle',
+        'categorias': categorias,
+    })
 
 @login_required
 def receta_form(request, pk=None):
@@ -84,9 +105,6 @@ def ingrediente_eliminar(request, pk):
         'objeto': ing.nombre, 'volver': 'recetas:ingredientes', 'pk': None, 'aviso': aviso,
     })
 
-
-
-
 def _destino_es_publico(url):
     """Evita que el servidor haga requests a redes internas (localhost, 192.168.x.x, etc.)."""
     host = urlparse(url).hostname
@@ -98,8 +116,6 @@ def _destino_es_publico(url):
         return False
     return all(ipaddress.ip_address(i[4][0]).is_global for i in infos)
 
-
-
 def _a_decimal(texto):
     """Convierte texto a Decimal finito (acepta coma o punto); None si no es válido."""
     try:
@@ -107,7 +123,7 @@ def _a_decimal(texto):
     except (InvalidOperation, ValueError):
         return None
     return valor if valor.is_finite() else None
-
+@login_required
 def _guardar_ingrediente_seguido(request):
     if not request.user.is_authenticated:
         messages.warning(request, 'Tenés que iniciar sesión o registrarte para guardar ingredientes seguidos.')
@@ -150,8 +166,7 @@ def _guardar_ingrediente_seguido(request):
         accion = 'guardado' if creado else 'actualizado'
         messages.success(request, f'¡Ingrediente «{nombre}» {accion} con éxito!')
     return redirect('recetas:verificar_url')
-
-
+@login_required
 def verificar_url(request):
     contexto = {'url_ingresada': ''}
  
@@ -214,3 +229,18 @@ def ingredientes(request, pk=None):
         'editando': editando,
         'ingredientes_seguidos': ingredientes_seguidos # <--- Lo pasamos al contexto
     })
+@login_required
+def calcular_evento(request):
+    return render(request,'recetas/calcular_evento.html')
+@login_required
+def planificador_semanal(request):
+    return render(request, 'recetas/planificador.html')
+@login_required
+def lista_compras(request):
+    return render(request, 'recetas/lista_compras.html')
+@login_required
+def notas(request):
+    return render(request, 'recetas/notas.html')
+@login_required
+def temporizador(request):
+    return render(request, 'recetas/temporizador.html')

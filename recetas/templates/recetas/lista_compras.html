@@ -1,0 +1,96 @@
+{% extends 'recetas/base.html' %}
+{% load static l10n %}
+{% comment %}
+Contexto esperado:
+  grupos              lista de secciones: cada una con nombre, subtotal e items
+                      item: pk, nombre, cantidad (número), unidad, origen (texto corto), precio, comprado (bool)
+  total_items         cantidad total de ítems
+  recetas_incluidas   recetas que alimentan la lista (pk, titulo)
+  recetas_disponibles recetas que se pueden sumar (pk, titulo)
+Formularios: todos envían POST a esta misma URL con un campo "accion":
+  agregar (item, cantidad) · vaciar_tildados · quitar_receta (receta) · sumar_receta (receta)
+Los ítems tildados se pueden guardar con un fetch/POST usando data-item (pk del ítem).
+{% endcomment %}
+{% block titulo %}Lista de compras · Mise{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'recetas/css/compras.css' %}">{% endblock %}
+
+{% block contenido %}
+<article class="ficha" id="compras">
+  <h2>Lista de compras</h2>
+  <div class="sub">{{ total_items|default:0 }} ítem{{ total_items|pluralize }} · {{ grupos|length }} secci{{ grupos|length|pluralize:"ón,ones" }} · armada desde {{ recetas_incluidas|length }} receta{{ recetas_incluidas|length|pluralize }}</div>
+  <div class="acciones-fila">
+    <button class="btn ghost" type="button" data-imprimir>Imprimir</button>
+    <button class="btn ghost" type="button" data-copiar>Copiar lista</button>
+    <form method="post" action="">
+      {% csrf_token %}
+      <button class="btn ghost peligro" type="submit" name="accion" value="vaciar_tildados">Vaciar tildados</button>
+    </form>
+  </div>
+
+  <div class="compras-grid">
+    <div class="compras-lista">
+      <form class="inline-form" method="post" action="">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="agregar">
+        <div class="campo"><label for="nuevo-item">Agregar ítem a mano</label><input type="text" id="nuevo-item" name="item" placeholder="Ej.: Servilletas" required></div>
+        <div class="campo"><label for="nuevo-cant">Cantidad</label><input type="text" id="nuevo-cant" name="cantidad" placeholder="Ej.: 1 paquete"></div>
+        <button class="btn" type="submit">Agregar</button>
+      </form>
+
+      {% for g in grupos %}
+      <section class="grupo">
+        <h3>{{ g.nombre }} <span class="prog">$ {{ g.subtotal|floatformat:"0g" }}</span></h3>
+        <ul class="checks">
+          {% for it in g.items %}
+          <li><label><input type="checkbox" data-item="{{ it.pk }}" data-precio="{{ it.precio|unlocalize }}"{% if it.comprado %} checked{% endif %}><span class="caja"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span class="txt">{{ it.nombre }}</span>{% if it.origen %}<span class="origen">{{ it.origen }}</span>{% endif %}<span class="cant">{{ it.cantidad|floatformat:"-2" }} {{ it.unidad }}</span><span class="precio">$ {{ it.precio|floatformat:"0g" }}</span></label></li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% empty %}
+      <p class="vacio">La lista está vacía. Sumá una receta o agregá un ítem a mano.</p>
+      {% endfor %}
+    </div>
+
+    <aside class="resumen" aria-label="Resumen de la compra">
+      <h3>Resumen</h3>
+      <div class="avance" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="avance-fill" id="avance-fill" style="width:0"></div></div>
+      <p class="avance-txt"><span id="r-hechos">0</span> de <span id="r-total">{{ total_items|default:0 }}</span> ítems en el carrito</p>
+      <dl class="totales">
+        <div><dt>Total estimado</dt><dd id="r-total-precio">$ 0</dd></div>
+        <div><dt>En el carrito</dt><dd id="r-carrito">$ 0</dd></div>
+        <div class="fuerte"><dt>Falta comprar</dt><dd id="r-falta">$ 0</dd></div>
+      </dl>
+      <p class="nota">Los precios salen de los ingredientes cargados.</p>
+
+      <h4>Recetas incluidas</h4>
+      <ul class="chips">
+        {% for r in recetas_incluidas %}
+        <li class="chip">{{ r.titulo }}
+          <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="receta" value="{{ r.pk }}">
+            <button type="submit" name="accion" value="quitar_receta" aria-label="Quitar {{ r.titulo }}">×</button>
+          </form>
+        </li>
+        {% empty %}
+        <li class="vacio">Ninguna todavía.</li>
+        {% endfor %}
+      </ul>
+      {% if recetas_disponibles %}
+      <form class="sumar-receta" method="post" action="">
+        {% csrf_token %}
+        <div class="campo">
+          <label for="add-receta">Sumar otra receta</label>
+          <select id="add-receta" name="receta">
+            {% for r in recetas_disponibles %}<option value="{{ r.pk }}">{{ r.titulo }}</option>{% endfor %}
+          </select>
+        </div>
+        <button class="btn ghost" type="submit" name="accion" value="sumar_receta">Sumar</button>
+      </form>
+      {% endif %}
+    </aside>
+  </div>
+</article>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'recetas/js/compras.js' %}"></script>{% endblock %}

@@ -5,6 +5,11 @@ app_name = 'recetas'
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('calcular_evento', views.calcular_evento, name='calcular_evento'),
+    path('planificador', views.planificador_semanal, name='planificador'),
+    path('lista_compras', views.lista_compras, name='lista_compras'),
+    path('notas', views.notas, name='notas'),
+    path('temporizador', views.temporizador, name='temporizador'),
     path('receta/nueva/', views.receta_form, name='crear'),
     path('receta/<int:pk>/', views.index, name='detalle'),
     path('receta/<int:pk>/editar/', views.receta_form, name='editar'),

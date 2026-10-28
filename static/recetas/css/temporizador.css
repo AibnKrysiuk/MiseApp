@@ -1,0 +1,54 @@
+/* ============================================================
+   temporizador.css — estilos específicos de la vista "Temporizador"
+   Se carga DESPUÉS de styles.css y reutiliza sus variables.
+   ============================================================ */
+
+/* Layout: reloj a la izquierda, configuración a la derecha */
+.temp-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(24px,4vw,52px);align-items:start;margin-top:18px}
+
+/* Caja del reloj, como una hoja suelta pegada al cuaderno */
+.dial-caja{display:flex;flex-direction:column;align-items:center;gap:26px;padding:30px 22px 26px;background:var(--paper);
+  border:1px solid var(--line);border-radius:4px 14px 4px 14px;
+  box-shadow:0 1px 2px rgba(60,40,20,.06),0 14px 28px -14px rgba(60,40,20,.28)}
+
+/* Anillo de progreso */
+.dial{position:relative;width:min(320px,100%);aspect-ratio:1}
+.dial svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-pista,.ring-avance{fill:none;stroke-width:7}
+.ring-pista{stroke:var(--line)}
+.ring-avance{stroke:var(--terracota);stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
+.dial-centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:0 18%}
+.dial-estado{font-family:var(--sans);font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.dial-hora{font-family:var(--serif);font-size:clamp(2.6rem,9vw,3.8rem);font-weight:700;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+.dial-etiqueta{font-style:italic;font-size:.95rem;color:var(--ink-soft);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Cuando termina */
+.dial.listo .ring-avance{stroke:var(--salvia)}
+.dial.listo .dial-hora,.dial.listo .dial-estado{color:var(--salvia)}
+.dial.listo .dial-centro{animation:latido 1s ease-in-out 3}
+@keyframes latido{50%{transform:scale(1.05)}}
+
+.temp-controles{display:flex;gap:12px;width:100%;justify-content:center}
+.temp-controles .btn{min-width:130px}
+
+/* Configuración */
+.temp-config h3{margin:0 0 12px;padding-bottom:6px;border-bottom:1.5px solid var(--rule)}
+.temp-config h3:not(:first-child){margin-top:28px}
+.temp-campos{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.temp-campos input{text-align:center;font-family:var(--serif);font-size:1.4rem}
+.temp-nombre{margin-bottom:4px}
+input:disabled{opacity:.5;cursor:not-allowed}
+
+/* Tiempos rápidos y de recetas */
+.presets{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:10px}
+.preset{font:inherit;font-family:var(--sans);font-size:.85rem;font-weight:500;color:var(--ink);cursor:pointer;
+  padding:8px 16px;border:1px solid var(--line);border-radius:999px;background:var(--paper);
+  transition:border-color .2s,color .2s,background .2s,transform .15s}
+.preset:hover{border-color:var(--terracota);color:var(--terracota);background:rgba(200,90,50,.05);transform:translateY(-1px)}
+.preset small{font-size:.78rem;color:var(--ink-soft);margin-left:6px}
+.preset.receta{border-style:dashed}
+
+/* Móvil */
+@media(max-width:820px){
+  .temp-grid{grid-template-columns:1fr}
+}

@@ -14,30 +14,51 @@
 <body>
 <div class="cuaderno{% block clase_cuaderno %}{% endblock %}">
   {% block barra_lateral %}
-  <aside class="indice" aria-label="Índice de recetas">
+  {% with nav=request.resolver_match.url_name %}
+  <aside class="indice" aria-label="Menú principal">
     <a class="marca" href="{% url 'recetas:index' %}">Mise<small>agenda de cocina</small></a>
-    <ul class="lista">
-      {% for r in indice_recetas %}
-      <li><a href="{% url 'recetas:detalle' r.pk %}"{% if receta and receta.pk == r.pk %} aria-current="true"{% endif %}>{{ r.titulo }}</a></li>
-      {% empty %}
-      <li class="vacio">Todavía no hay recetas.</li>
-      {% endfor %}
-    </ul>
+
+    {# Fecha y hora: se renderiza en el servidor y reloj.js la mantiene viva en el navegador #}
+    <div class="reloj" aria-label="Fecha y hora actual">
+      <div class="reloj-hora"><span id="reloj-hora">{% now "H:i" %}</span><small id="reloj-seg">{% now ":s" %}</small></div>
+      <div class="reloj-fecha" id="reloj-fecha">{% now "l, j \d\e F \d\e Y" %}</div>
+    </div>
+
     <div class="acciones-col">
       <a class="btn" href="{% url 'recetas:crear' %}">Nueva receta</a>
       <a class="btn ghost" href="{% url 'recetas:ingredientes' %}">Ingredientes</a>
       <a class="btn ghost" href="{% url 'recetas:verificar_url' %}">Semáforo de URLs</a>
+      <hr class="sep">
+      <details class="herramientas"{% if nav == 'temporizador' or nav == 'cronometro' or nav == 'opciones' %} open{% endif %}>
+        <summary class="btn ghost">Herramientas</summary>
+        <ul class="submenu">
+          {# Cronómetro y Opciones todavía no tienen vista: cuando existan, cambiar "#" por {% url 'recetas:cronometro' %} y {% url 'recetas:opciones' %} #}
+          <li><a href="{% url 'recetas:calcular_evento' %}"{% if nav == 'calcular_evento' %} aria-current="page"{% endif %}>Calcular evento</a></li>
+          <li><a href="{% url 'recetas:planificador' %}"{% if nav == 'planificador' %} aria-current="page"{% endif %}>Planificador semanal</a></li>
+          <li><a href="{% url 'recetas:lista_compras' %}"{% if nav == 'lista_compras' %} aria-current="page"{% endif %}>Lista de compras</a></li>
+          <li><a href="{% url 'recetas:notas' %}"{% if nav == 'notas' %} aria-current="page"{% endif %}>Notas</a></li>
+          <li><a href="{% url 'recetas:temporizador' %}"{% if nav == 'temporizador' %} aria-current="page"{% endif %}>Temporizador</a></li>
+          <li><a href="#"{% if nav == 'opciones' %} aria-current="page"{% endif %}>Opciones de la app</a></li>
+        </ul>
+      </details>
       {% if user.is_authenticated %}<a class="btn ghost" href="{% url 'account_logout' %}">Cerrar sesión</a>{% endif %}
     </div>
   </aside>
+  {% endwith %}
   {% endblock %}
+
   <main class="pagina">
+    {% comment %}
+    Mensajes de Django (se quitaron del diseño). Para volver a mostrarlos, descomentar:
     {% if messages %}
     <ul class="mensajes" role="status">{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
     {% endif %}
+    {% endcomment %}
     {% block contenido %}{% endblock %}
   </main>
 </div>
+<script src="{% static 'recetas/js/reloj.js' %}"></script>
 <script src="{% static 'recetas/js/mise.js' %}"></script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,71 @@
+{% extends 'recetas/base.html' %}
+{% load static %}
+{% comment %}
+Contexto esperado:
+  inicio, fin        primer y último día de la semana (fechas)
+  anterior, siguiente  fechas de inicio de la semana anterior y la siguiente (para ?semana=AAAA-MM-DD)
+  dias               7 días: cada uno con fecha, hoy (bool), almuerzo y cena (receta o None)
+  recetas            recetas para elegir en el cuadro "Agregar comida"
+  planificadas       cantidad de comidas con receta en la semana
+Formularios: POST a esta misma URL con "accion":
+  asignar (fecha, turno, receta) · quitar (fecha, turno) · limpiar
+"turno" vale "almuerzo" o "cena". Cada categoría puede traer un color opcional (categoria.color).
+{% endcomment %}
+{% block titulo %}Planificador semanal · Mise{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'recetas/css/planificador.css' %}">{% endblock %}
+
+{% block contenido %}
+<article class="ficha" id="planificador">
+  <h2>Planificador semanal</h2>
+  <div class="sub">Qué se cocina cada día</div>
+
+  <div class="semana-nav">
+    <a class="btn ghost" href="?semana={{ anterior|date:'Y-m-d' }}">‹ Anterior</a>
+    <span class="semana-rango">{{ inicio|date:"j \d\e F" }} – {{ fin|date:"j \d\e F" }}</span>
+    <a class="btn ghost" href="?semana={{ siguiente|date:'Y-m-d' }}">Siguiente ›</a>
+  </div>
+
+  {% for d in dias %}
+  <section class="dia{% if d.hoy %} hoy{% endif %}" aria-label="{{ d.fecha|date:'l j \d\e F' }}">
+    <header class="dia-fecha"><span class="dia-nombre">{{ d.fecha|date:"D" }}</span><span class="dia-num"{% if d.hoy %} aria-current="date"{% endif %}>{{ d.fecha|date:"j" }}</span><span class="dia-mes">{{ d.fecha|date:"M" }}</span></header>
+    <div class="dia-slots">
+      {% include 'recetas/_slot_comida.html' with fecha=d.fecha turno="almuerzo" etiqueta="Almuerzo" receta=d.almuerzo %}
+      {% include 'recetas/_slot_comida.html' with fecha=d.fecha turno="cena" etiqueta="Cena" receta=d.cena %}
+    </div>
+  </section>
+  {% endfor %}
+
+  <footer class="plan-pie">
+    <span class="plan-conteo">{% if planificadas %}{{ planificadas }} comida{{ planificadas|pluralize }} planificada{{ planificadas|pluralize }}{% else %}Nada planificado todavía{% endif %}</span>
+    <div class="acciones-fila">
+      <form method="post" action="" data-confirmar="¿Limpiar todas las comidas de esta semana?">
+        {% csrf_token %}
+        <button class="btn ghost peligro" type="submit" name="accion" value="limpiar">Limpiar semana</button>
+      </form>
+      <a class="btn" href="#">Armar lista de compras</a>
+    </div>
+  </footer>
+</article>
+
+<dialog class="plan-dialogo" id="plan-dialogo" aria-labelledby="plan-dialogo-titulo">
+  <form method="post" action="">
+    {% csrf_token %}
+    <input type="hidden" name="fecha" id="plan-fecha">
+    <input type="hidden" name="turno" id="plan-turno">
+    <h3 id="plan-dialogo-titulo">Agregar comida</h3>
+    <p class="plan-dialogo-sub" id="plan-dialogo-sub"></p>
+    <div class="campo">
+      <label for="plan-receta">Receta</label>
+      <select id="plan-receta" name="receta" required>
+        {% for r in recetas %}<option value="{{ r.pk }}">{{ r.titulo }}{% if r.categoria %} · {{ r.categoria }}{% endif %}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="acciones-fila fin">
+      <button class="btn ghost" type="button" id="plan-cancelar">Cancelar</button>
+      <button class="btn" type="submit" name="accion" value="asignar">Guardar</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'recetas/js/planificador.js' %}"></script>{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'recetas/base.html' %}
+{% load static %}
+{% comment %}
+Contexto esperado (opcional):
+  tiempos_recetas   lista con titulo, minutos y segundos (tiempo de cocción de cada receta)
+Todo lo demás funciona en el navegador (temporizador.js).
+{% endcomment %}
+{% block titulo %}Temporizador · Mise{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'recetas/css/temporizador.css' %}">{% endblock %}
+
+{% block contenido %}
+<article class="ficha" id="temporizador">
+  <h2>Temporizador</h2>
+  <div class="sub">Cuenta regresiva para no pasarte de punto</div>
+
+  <div class="temp-grid">
+    <!-- Reloj de cuenta regresiva -->
+    <section class="dial-caja" aria-label="Cuenta regresiva">
+      <div class="dial" id="dial">
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="ring-pista" cx="100" cy="100" r="88"/>
+          <circle class="ring-avance" id="ring" cx="100" cy="100" r="88"/>
+        </svg>
+        <div class="dial-centro">
+          <span class="dial-estado" id="estado">Listo para empezar</span>
+          <span class="dial-hora" id="pantalla" role="timer">10:00</span>
+          <span class="dial-etiqueta" id="etiqueta">Temporizador</span>
+        </div>
+      </div>
+      <div class="temp-controles">
+        <button class="btn" type="button" id="btn-iniciar">Iniciar</button>
+        <button class="btn ghost" type="button" id="btn-reiniciar">Reiniciar</button>
+      </div>
+    </section>
+
+    <!-- Configuración -->
+    <section class="temp-config">
+      <h3>Tiempo</h3>
+      <div class="temp-campos">
+        <div class="campo"><label for="t-h">Horas</label><input type="number" id="t-h" min="0" max="23" value="0"></div>
+        <div class="campo"><label for="t-m">Minutos</label><input type="number" id="t-m" min="0" max="59" value="10"></div>
+        <div class="campo"><label for="t-s">Segundos</label><input type="number" id="t-s" min="0" max="59" value="0"></div>
+      </div>
+      <div class="campo temp-nombre">
+        <label for="t-nombre">¿Para qué es?</label>
+        <input type="text" id="t-nombre" placeholder="Ej.: Volcán en el horno">
+      </div>
+
+      <h3>Tiempos rápidos</h3>
+      <ul class="presets">
+        <li><button type="button" class="preset" data-seg="60">1 min</button></li>
+        <li><button type="button" class="preset" data-seg="300">5 min</button></li>
+        <li><button type="button" class="preset" data-seg="600">10 min</button></li>
+        <li><button type="button" class="preset" data-seg="900">15 min</button></li>
+        <li><button type="button" class="preset" data-seg="1800">30 min</button></li>
+      </ul>
+
+      <h3>De tus recetas</h3>
+      <ul class="presets">
+        {% for t in tiempos_recetas %}
+        <li><button type="button" class="preset receta" data-seg="{{ t.segundos }}" data-nombre="{{ t.titulo }}">{{ t.titulo }} <small>{{ t.minutos }} min</small></button></li>
+        {% empty %}
+        <li class="vacio">Todavía no hay recetas con tiempo de cocción.</li>
+        {% endfor %}
+      </ul>
+      <p class="nota">Cuando termine, suena un aviso. Para que se escuche, tocá Iniciar con la pestaña abierta.</p>
+    </section>
+  </div>
+</article>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'recetas/js/temporizador.js' %}"></script>{% endblock %}

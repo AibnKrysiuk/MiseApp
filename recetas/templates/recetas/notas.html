@@ -1,0 +1,56 @@
+{% extends 'recetas/base.html' %}
+{% load static %}
+{% comment %}
+Contexto esperado:
+  notas   lista de notas: pk, titulo, contenido, actualizada (fecha)
+Formulario del cuadro "Nueva nota / Editar nota": POST a esta misma URL con
+  accion = guardar | eliminar, y un campo "pk" (vacío si es una nota nueva).
+Al tocar una tarjeta se abre el mismo cuadro con sus datos (notas.js).
+{% endcomment %}
+{% block titulo %}Notas · Mise{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'recetas/css/notas.css' %}">{% endblock %}
+
+{% block contenido %}
+<article class="ficha" id="notas">
+  <h2>Notas</h2>
+  <div class="sub">{{ notas|length }} nota{{ notas|length|pluralize }}</div>
+
+  <div class="tarjetas" id="notas-grid">
+    {% for n in notas %}
+    <a class="tarjeta nota-tarjeta" href="{% url 'recetas:notas' %}?nota={{ n.pk }}" data-nota-pk="{{ n.pk }}" data-titulo="{{ n.titulo }}" data-contenido="{{ n.contenido }}">
+      <h4>{{ n.titulo|default:"Sin título" }}</h4>
+      <div class="sub">Editada el {{ n.actualizada|date:"j \d\e F" }}</div>
+      <p>{{ n.contenido|default:"Sin contenido." }}</p>
+    </a>
+    {% endfor %}
+
+    <button class="tarjeta nota-nueva" type="button" id="nota-abrir" aria-label="Agregar una nota">
+      <span class="mas" aria-hidden="true">+</span>
+      <span class="nota-nueva-txt">Nueva nota</span>
+    </button>
+  </div>
+</article>
+
+<dialog class="nota-dialogo" id="nota-dialogo" aria-labelledby="nota-dialogo-titulo">
+  <form method="post" action="{% url 'recetas:notas' %}">
+    {% csrf_token %}
+    <input type="hidden" name="pk" id="nota-pk">
+    <h3 id="nota-dialogo-titulo">Nueva nota</h3>
+    <div class="campo">
+      <label for="nota-titulo">Título</label>
+      <input type="text" id="nota-titulo" name="titulo" placeholder="Ej.: Compras para el viernes">
+    </div>
+    <div class="campo">
+      <label for="nota-texto">Nota</label>
+      <textarea id="nota-texto" name="contenido" rows="6" placeholder="Escribí lo que quieras recordar…"></textarea>
+    </div>
+    <div class="acciones-fila fin">
+      <button class="btn ghost peligro nota-eliminar" type="submit" name="accion" value="eliminar" id="nota-eliminar" formnovalidate hidden>Eliminar</button>
+      <button class="btn ghost" type="button" id="nota-cancelar">Cancelar</button>
+      <button class="btn" type="submit" name="accion" value="guardar">Guardar nota</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'recetas/js/notas.js' %}"></script>{% endblock %}

@@ -1,8 +1,19 @@
 {% extends 'recetas/base.html' %}
+{% comment %}
+Contexto esperado:
+  vista             'indice' o 'detalle'
+  categorias        categorías para las solapas (pk, nombre y, opcional, color)
+  categoria_activa  pk (int) de la categoría filtrada, o None
+  recetas           recetas a listar en la vista 'indice' (ya filtradas por categoría)
+  receta            receta a mostrar en la vista 'detalle'
+{% endcomment %}
 {% block contenido %}
-<nav class="barra" aria-label="Vista">
-  <a class="tab" href="{% url 'recetas:index' %}?vista=indice"{% if vista == 'indice' %} aria-current="true"{% endif %}>Índice</a>
-  <a class="tab" href="{% url 'recetas:index' %}"{% if vista == 'detalle' %} aria-current="true"{% endif %}>Receta</a>
+<nav class="barra" aria-label="Categorías">
+  <a class="tab todas" href="{% url 'recetas:index' %}?vista=indice"{% if vista == 'indice' and not categoria_activa %} aria-current="true"{% endif %}>Índice</a>
+  {% for c in categorias %}
+  <a class="tab" href="{% url 'recetas:index' %}?vista=indice&amp;categoria={{ c.pk }}"{% if c.color %} data-color="{{ c.color }}"{% endif %}{% if c.pk == categoria_activa or vista == 'detalle' and receta.categoria_id == c.pk %} aria-current="true"{% endif %}>{{ c.nombre }}</a>
+  {% endfor %}
+  <a class="tab" href="" aria-current="false">+</a>
 </nav>
 
 {% if vista == 'indice' %}
@@ -14,7 +25,7 @@
       <p>{{ r.descripcion|default:"Sin descripción." }}</p>
     </a>
     {% empty %}
-    <p class="vacio">Tu cuaderno está vacío. <a href="{% url 'recetas:crear' %}">Agregá la primera receta</a>.</p>
+    <p class="vacio">{% if categoria_activa %}No hay recetas en esta categoría todavía.{% else %}Tu cuaderno está vacío. <a href="{% url 'recetas:crear' %}">Agregá la primera receta</a>.{% endif %}</p>
     {% endfor %}
   </div>
 

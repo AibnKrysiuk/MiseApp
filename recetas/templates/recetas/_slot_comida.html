@@ -1,0 +1,23 @@
+{% comment %}
+Una comida (almuerzo o cena) del planificador. Se usa con:
+  {% include 'recetas/_slot_comida.html' with fecha=d.fecha turno="almuerzo" etiqueta="Almuerzo" receta=d.almuerzo %}
+{% endcomment %}
+{% if receta %}
+<div class="slot lleno"{% if receta.categoria.color %} data-color="{{ receta.categoria.color }}"{% endif %}>
+  <span class="slot-turno">{{ etiqueta }}</span>
+  <a class="slot-receta" href="{% url 'recetas:detalle' receta.pk %}">{{ receta.titulo }}</a>
+  <span class="slot-meta">{% if receta.categoria %}{{ receta.categoria }} · {% endif %}{{ receta.tiempo_preparacion_min|add:receta.tiempo_coccion_min }} min</span>
+  <form class="slot-quitar-form" method="post" action="">
+    {% csrf_token %}
+    <input type="hidden" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+    <input type="hidden" name="turno" value="{{ turno }}">
+    <button class="slot-quitar" type="submit" name="accion" value="quitar" aria-label="Quitar {{ receta.titulo }}">×</button>
+  </form>
+</div>
+{% else %}
+<div class="slot vacio">
+  <button class="slot-mas" type="button" data-fecha="{{ fecha|date:'Y-m-d' }}" data-turno="{{ turno }}" data-etiqueta="{{ fecha|date:'l j' }} · {{ etiqueta }}" aria-label="Agregar receta: {{ fecha|date:'l j' }}, {{ etiqueta }}">
+    <span class="slot-turno">{{ etiqueta }}</span><span class="slot-mas-txt">+ Agregar receta</span>
+  </button>
+</div>
+{% endif %}

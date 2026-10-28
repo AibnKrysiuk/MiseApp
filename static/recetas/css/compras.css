@@ -1,0 +1,66 @@
+/* ============================================================
+   compras.css — estilos específicos de la vista "Lista de compras"
+   Se carga DESPUÉS de styles.css y reutiliza sus variables
+   (--terracota, --salvia, --line, --serif, --sans, etc.).
+   ============================================================ */
+
+/* Layout: lista a la izquierda, resumen tipo nota a la derecha */
+.compras-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(230px,.85fr);gap:clamp(24px,4vw,48px);align-items:start}
+.compras-lista .inline-form{margin-top:0}
+.compras-lista .inline-form .campo{min-width:170px}
+.grupo{margin-bottom:26px}
+.grupo h3{border-bottom:1.5px solid var(--rule);padding-bottom:6px;margin-bottom:2px}
+.grupo .prog{color:var(--ink-soft);font-weight:500}
+
+/* Filas de la lista */
+.origen{font-family:var(--sans);font-size:.7rem;font-weight:500;color:var(--ink-soft);background:var(--paper-2);border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-left:10px;align-self:center;white-space:nowrap}
+.precio{font-family:var(--sans);font-size:.82rem;color:var(--ink-soft);min-width:5.5em;text-align:right;white-space:nowrap;padding-left:10px}
+input:checked ~ .cant,input:checked ~ .precio,input:checked ~ .origen{opacity:.45;transition:opacity .3s}
+
+/* Resumen: nota adhesiva pegada con cinta */
+.resumen{position:sticky;top:24px;background:#fbf3dc;border:1px solid #efe2bb;border-radius:3px 3px 10px 3px;padding:30px 22px 22px;transform:rotate(.6deg);
+  box-shadow:0 1px 2px rgba(60,40,20,.08),0 14px 24px -14px rgba(60,40,20,.35)}
+.resumen::before{content:"";position:absolute;top:-10px;left:50%;width:84px;height:22px;transform:translateX(-50%) rotate(-2deg);background:rgba(200,90,50,.22);border-left:1px dashed rgba(200,90,50,.35);border-right:1px dashed rgba(200,90,50,.35)}
+.resumen h3{margin-top:0}
+.resumen h4{font-family:var(--serif);font-size:1.05rem;font-weight:500;margin:22px 0 10px}
+.avance{height:8px;border-radius:999px;background:rgba(43,43,43,.1);overflow:hidden;margin:6px 0 8px}
+.avance-fill{height:100%;background:var(--salvia);border-radius:999px;transition:width .4s}
+.avance-txt{font-family:var(--sans);font-size:.8rem;color:var(--ink-soft);margin-bottom:14px}
+.totales{font-family:var(--sans);font-size:.88rem}
+.totales div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed rgba(43,43,43,.18)}
+.totales dt{color:var(--ink-soft)}
+.totales dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+.totales .fuerte{border-bottom:none;padding-top:10px}
+.totales .fuerte dt{color:var(--ink);font-weight:600}
+.totales .fuerte dd{font-family:var(--serif);font-size:1.35rem;color:var(--terracota)}
+.resumen .nota{margin-top:6px}
+
+/* Chips de recetas incluidas */
+.chips{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-family:var(--sans);font-size:.78rem;padding:5px 6px 5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper)}
+.chip button{font:inherit;line-height:1;width:20px;height:20px;border:none;border-radius:50%;background:transparent;color:var(--ink-soft);cursor:pointer}
+.chip form{display:contents}
+.chip button:hover{background:rgba(168,51,26,.12);color:var(--rojo)}
+
+/* Sumar otra receta */
+.sumar-receta{display:flex;gap:10px;align-items:flex-end}
+.sumar-receta .campo{flex:1}
+.sumar-receta .btn{padding:8px 16px}
+
+/* Móvil: el resumen pasa arriba y deja de ser pegajoso */
+@media(max-width:820px){
+  .compras-grid{grid-template-columns:1fr}
+  .resumen{order:-1;position:relative;top:0;transform:none}
+}
+
+/* Impresión: solo la lista */
+@media print{
+  body{background:#fff;padding:0}
+  .cuaderno{display:block;border:none;box-shadow:none;background:#fff}
+  .indice,.acciones-fila,.inline-form,.sumar-receta,.chip button{display:none!important}
+  .pagina{background:none;padding:0}
+  .pagina::before{display:none}
+  .compras-grid{grid-template-columns:1fr}
+  .resumen{position:static;transform:none;box-shadow:none;margin-top:20px}
+  .resumen::before{display:none}
+}

@@ -1,0 +1,32 @@
+/* ============================================================
+   notas.css — estilos específicos de la vista "Notas"
+   Se carga DESPUÉS de styles.css y reutiliza sus variables
+   y la grilla .tarjetas / .tarjeta de las recetas.
+   ============================================================ */
+
+/* Tarjeta de nota: igual que la de receta + franja de color arriba */
+.nota-tarjeta{--c:var(--terracota);min-height:180px;border-top:5px solid var(--c)}
+.nota-tarjeta:nth-child(4n+2){--c:var(--salvia)}
+.nota-tarjeta:nth-child(4n+3){--c:#d0a03f}
+.nota-tarjeta:nth-child(4n+4){--c:#6d8b9c}
+.nota-tarjeta p{-webkit-line-clamp:5}
+
+/* Tarjeta "+" para agregar */
+.nota-nueva{min-height:180px;align-items:center;justify-content:center;gap:14px;cursor:pointer;
+  font:inherit;font-family:var(--sans);font-size:.9rem;font-weight:500;color:var(--ink-soft);
+  background:transparent;border:2px dashed var(--line);box-shadow:none;text-align:center;
+  transition:transform .2s,color .2s,border-color .2s,background .2s}
+.nota-nueva:hover{transform:translateY(-3px);color:var(--terracota);border-color:var(--terracota);background:rgba(200,90,50,.04);box-shadow:none}
+.nota-nueva .mas{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;
+  border:1.5px dashed currentColor;font-family:var(--serif);font-size:2.2rem;font-weight:500;line-height:1;padding-bottom:4px}
+
+/* Cuadro para escribir una nota nueva */
+.nota-dialogo{border:1px solid var(--line);border-radius:4px 14px 4px 14px;background:var(--paper);color:var(--ink);
+  padding:28px clamp(20px,4vw,32px);width:min(480px,calc(100% - 32px));margin:auto;
+  box-shadow:0 2px 4px rgba(60,40,20,.08),0 24px 48px -12px rgba(60,40,20,.35)}
+.nota-dialogo::backdrop{background:rgba(43,43,43,.4)}
+.nota-dialogo h3{margin-top:0;margin-bottom:18px;font-size:1.6rem}
+.nota-dialogo .campo{margin-bottom:18px}
+.nota-dialogo textarea{resize:vertical;min-height:120px;line-height:1.7}
+.nota-dialogo .acciones-fila.fin{margin-bottom:0}
+.nota-eliminar{margin-right:auto}
