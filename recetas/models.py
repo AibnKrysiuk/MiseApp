@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.db import models
 
 # Create your models here.
 class Categoria(models.Model):
+    # Las categorías pueden ser globales o también podés agregarles 'usuario' si cada uno crea las suyas.
     nombre = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
@@ -9,6 +11,9 @@ class Categoria(models.Model):
 
 
 class Receta(models.Model):
+    # Relación con el usuario propietario de la receta
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="recetas")
+    
     titulo = models.CharField(max_length=150, verbose_name="Título de la receta.")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción o Notas.")
     porciones = models.PositiveIntegerField(default=1, verbose_name="Cantidad de porciones.")
@@ -22,16 +27,18 @@ class Receta(models.Model):
     def __str__(self):
         return self.titulo
 
+
 class Ingrediente(models.Model):
+    # Los ingredientes generales del sistema (pueden ser compartidos o globales)
     nombre = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.nombre
 
+
 class IngredienteReceta(models.Model):
     """
     Tabla intermedia para definir la cantidad y unidad exacta que lleva cada receta.
-    Ejemplo: Flan de Chocolate -> 250 g de Azúcar
     """
     UNIDADES = [
         ('g', 'Gramos'),
@@ -51,6 +58,7 @@ class IngredienteReceta(models.Model):
     def __str__(self):
         return f"{self.cantidad} {self.unidad_medida} de {self.ingrediente.nombre}"
 
+
 class PasoReceta(models.Model):
     """
     Pasos/Procedimiento ordenados cronológicamente.
@@ -67,23 +75,30 @@ class PasoReceta(models.Model):
         return f"Paso {self.numero_paso} - {self.receta.titulo}"
 
 
-
 class ProductoSeguido(models.Model):
+    # Relación con el usuario
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="productos_seguidos")
+    
     nombre = models.CharField(max_length=150, help_text="Ej: Leche sachet La Serenísima 1L")
-    url = models.URLField(max_length=500, unique=True, help_text="URL limpia del producto")
+    url = models.URLField(max_length=500, help_text="URL limpia del producto") # Quitamos unique=True global para que distintos usuarios puedan seguir el mismo producto si quieren, o manejado por usuario.
     precio_actual = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     ultima_actualizacion = models.DateTimeField(null=True, blank=True)
     activo = models.BooleanField(default=True, help_text="Si está activo, el bot lo revisa periódicamente")
 
     def __str__(self):
-        return f"{self.nombre} - ${self.precio_actual or 'Sin precio'}"
+        precio = self.precio_actual if self.precio_actual is not None else 'Sin precio'
+        return f"{self.nombre} - ${precio}"
+
 
 class IngredienteSeguido(models.Model):
+    # Relación con el usuario
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ingredientes_seguidos")
+    
     # Identificación personalizada por el usuario
     nombre = models.CharField(max_length=150, help_text="Nombre personalizado, ej: Leche Disco")
     
     # Datos de la URL y rastreo
-    url = models.URLField(max_length=500, unique=True, help_text="URL limpia del producto")
+    url = models.URLField(max_length=500, help_text="URL limpia del producto")
     precio_actual = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
     # Cantidad y unidad especificada por el usuario (ej: 1 lt, 400 g)
