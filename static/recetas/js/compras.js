@@ -1,4 +1,4 @@
-// Lista de compras: avance y totales al tildar, imprimir y copiar la lista.
+// Lista de compras: tildar ítems (se guarda en el servidor), avance y totales, imprimir y copiar.
 (function () {
   var fill = document.getElementById('avance-fill');
   if (!fill) return;
@@ -7,11 +7,12 @@
   function plata(n) { return '$ ' + Math.round(n).toLocaleString('es-AR'); }
 
   function calcular() {
-    var total = 0, carrito = 0, hechos = 0;
+    var total = 0, carrito = 0, hechos = 0, sinPrecio = 0;
     cajas.forEach(function (c) {
       var p = parseFloat(c.dataset.precio) || 0;
       total += p;
       if (c.checked) { carrito += p; hechos++; }
+      if (c.dataset.sinPrecio) sinPrecio++;
     });
     var pct = cajas.length ? Math.round(hechos / cajas.length * 100) : 0;
     document.getElementById('r-hechos').textContent = hechos;
@@ -21,10 +22,39 @@
     document.getElementById('r-falta').textContent = plata(total - carrito);
     fill.style.width = pct + '%';
     fill.parentNode.setAttribute('aria-valuenow', pct);
+
+    var aviso = document.getElementById('r-sin-precio');
+    aviso.hidden = !sinPrecio;
+    aviso.textContent = sinPrecio
+      ? sinPrecio + (sinPrecio === 1 ? ' ítem no tiene' : ' ítems no tienen') + ' precio de referencia y no suma' + (sinPrecio === 1 ? '' : 'n') + ' al total.'
+      : '';
+  }
+
+  // Guarda el tildado en el servidor sin recargar la página.
+  function guardar(caja) {
+    var token = document.querySelector('input[name=csrfmiddlewaretoken]');
+    var datos = new FormData();
+    datos.append('accion', 'marcar');
+    datos.append('item', caja.dataset.item);
+    datos.append('comprado', caja.checked ? '1' : '0');
+    fetch(window.location.href, {
+      method: 'POST',
+      body: datos,
+      headers: { 'X-CSRFToken': token ? token.value : '', 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin',
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    }).catch(function () {
+      caja.checked = !caja.checked;          // no se pudo guardar: se deshace el cambio
+      calcular();
+      alert('No se pudo guardar el cambio. Probá de nuevo.');
+    });
   }
 
   document.addEventListener('change', function (e) {
-    if (e.target.matches('.checks input')) calcular();
+    if (!e.target.matches('.checks input')) return;
+    calcular();
+    if (e.target.dataset.item) guardar(e.target);
   });
   calcular();
 

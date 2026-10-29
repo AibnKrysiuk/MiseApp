@@ -4,24 +4,42 @@
    ============================================================ */
 
 /* Layout: datos y menú a la izquierda, ticket a la derecha */
-.evento-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(24px,4vw,48px);align-items:start;margin-top:18px}
+.evento-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(24px,4vw,48px);align-items:start;margin-top:18px}
 .evento-form h3,.ticket h3{padding-bottom:6px;border-bottom:1.5px solid var(--rule);margin:0 0 14px}
 .evento-form h3:not(:first-child){margin-top:30px}
 .evento-datos{grid-template-columns:1fr 1fr;margin-bottom:0}
 .evento-datos .campo:nth-child(4){grid-column:1/-1}
 
-/* El selector de fecha toma el estilo de los demás campos */
-input[type=date]{font:inherit;font-family:var(--body);font-size:1rem;color:var(--ink);width:100%;background:transparent;
-  border:none;border-bottom:1.5px solid var(--line);padding:8px 2px;transition:border-color .2s}
+/* Mis eventos: una solapa por evento guardado */
+.eventos-barra{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 24px}
+.tab-evento{font-family:var(--sans);font-size:.82rem;font-weight:500;padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink-soft);text-decoration:none}
+.tab-evento small{opacity:.7;margin-left:4px}
+.tab-evento:hover{border-color:var(--terracota);color:var(--terracota)}
+.tab-evento[aria-current="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 
-/* Menú: recetas con casillero (sin tachado) */
-.menu-lista{list-style:none;padding:0}
-.menu-lista li{border-bottom:1px solid var(--line)}
-.menu-op{display:flex;align-items:center;gap:14px;padding:12px 2px;cursor:pointer;line-height:1.4}
-.menu-op input{position:absolute;opacity:0;pointer-events:none}
-.menu-op .caja{margin-top:0}
-.menu-nom{font-family:var(--serif);font-size:1.1rem}
-.menu-meta{margin-left:auto;font-family:var(--sans);font-size:.78rem;color:var(--ink-soft);white-space:nowrap}
+/* Editor del menú: fases -> opciones -> platos */
+.fase{background:var(--paper);border:1px solid var(--line);border-radius:4px 12px 4px 12px;padding:16px 16px 14px;margin-bottom:16px;
+  box-shadow:0 1px 2px rgba(60,40,20,.05),0 8px 16px -12px rgba(60,40,20,.25)}
+.fase-cab{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.fase-campo{flex:1;min-width:160px}
+.fase-nombre{font-family:var(--serif);font-size:1.25rem!important}
+.fase-total{font-family:var(--sans);font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap;margin-bottom:6px}
+.fase-total.ok{background:rgba(120,134,107,.2);color:#55633f}
+.fase-total.falta,.fase-total.sobra{background:rgba(208,160,63,.2);color:#8a6414}
+.opcion-ev{background:var(--paper-2);border-radius:4px 8px 4px 8px;padding:12px 14px;margin-top:12px}
+.opcion-campos{display:grid;grid-template-columns:130px 1fr;gap:14px;margin-bottom:10px}
+.plato-fila{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.plato-fila select{flex:1}
+.plato-quitar{flex:none;width:26px;height:26px;border:none;border-radius:50%;background:transparent;font:inherit;font-size:1.15rem;line-height:1;color:var(--ink-soft);cursor:pointer}
+.plato-quitar:hover{background:rgba(168,51,26,.12);color:var(--rojo)}
+.opcion-pie{display:flex;justify-content:space-between;gap:12px;margin-top:2px}
+.link-btn{font:inherit;font-family:var(--sans);font-size:.8rem;font-weight:500;background:none;border:none;padding:4px 0;color:var(--terracota);cursor:pointer}
+.link-btn:hover{text-decoration:underline}
+.link-btn.peligro{color:var(--rojo)}
+.fase > .btn{margin-top:12px;padding:7px 16px}
+.menu-acciones{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.menu-acciones .btn{padding:8px 16px}
+.evento-acciones{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
 
 /* Ticket de compra */
 .ticket{position:relative;background:var(--paper-2);border:1px solid var(--line);border-radius:4px 4px 0 0;padding:26px 24px 22px;
@@ -43,11 +61,10 @@ input[type=date]{font:inherit;font-family:var(--body);font-size:1rem;color:var(-
 .ev-totales dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
 .ev-totales .fuerte dt{color:var(--ink);font-weight:600}
 .ev-totales .fuerte dd{font-family:var(--serif);font-size:1.5rem;color:var(--terracota)}
-.ticket-acciones{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
-.ticket-acciones .btn{flex:1;white-space:nowrap}
 
 /* Móvil */
 @media(max-width:820px){
   .evento-grid{grid-template-columns:1fr}
   .evento-datos{grid-template-columns:1fr 1fr}
+  .opcion-campos{grid-template-columns:1fr}
 }

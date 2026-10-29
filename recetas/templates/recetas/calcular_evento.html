@@ -1,17 +1,16 @@
 {% extends 'recetas/base.html' %}
 {% load static %}
 {% comment %}
-Contexto esperado:
-  recetas        recetas para armar el menú (pk, titulo, categoria, porciones)
-  datos_recetas  dict para el cálculo en el navegador, con la pk de la receta como clave:
-                 {pk: {"n": titulo, "p": porciones que rinde,
-                       "ing": [[nombre, cantidad, unidad, precio_por_unidad_de_medida], ...]}}
-                 (usar float, no Decimal, para que viaje bien en JSON)
-  evento         (opcional) evento ya guardado: nombre, fecha, invitados, margen (0, 10, 15 o 20)
-  seleccionadas  (opcional) lista de pk de recetas tildadas
-Formulario: POST a esta misma URL con accion = guardar | a_lista
-  y los campos nombre, fecha, invitados, margen y recetas (una por cada tilde).
-El cálculo del ticket lo hace evento.js al vuelo.
+Contexto esperado (lo arma la vista calcular_evento):
+  evento      el evento abierto (o None si es nuevo)
+  borrador    si hubo errores al guardar, lo que el usuario había escrito: nombre, fecha, invitados, margen
+  eventos     eventos guardados del usuario
+  recetas     recetas del usuario para armar el menú
+  estructura  el menú como datos: [{nombre, opciones: [{porciones, nota, recetas: [pk, ...]}]}]
+  resultado   None o {lineas, total, por_persona, sin_precio} (lo necesario para comprar)
+              línea: nombre, cantidad, unidad, precio (None si no hay referencia)
+Formulario: POST a esta misma URL con accion = guardar | a_lista, los datos del evento y "estructura"
+(el menú en JSON, lo completa evento.js al enviar). Para eliminar: recetas:evento_eliminar.
 {% endcomment %}
 {% block titulo %}Calcular evento · Mise{% endblock %}
 {% block extra_head %}<link rel="stylesheet" href="{% static 'recetas/css/evento.css' %}">{% endblock %}
@@ -19,10 +18,19 @@ El cálculo del ticket lo hace evento.js al vuelo.
 {% block contenido %}
 <article class="ficha" id="evento">
   <h2>Calcular evento</h2>
-  <div class="sub">Cuánto cocinar y comprar según la cantidad de invitados</div>
+  <div class="sub">Armá el menú por fases y opciones, y calculá lo necesario para cubrirlo</div>
 
-  <form method="post" action="">
+  <nav class="eventos-barra" aria-label="Mis eventos">
+    <a class="tab-evento" href="{% url 'recetas:calcular_evento' %}"{% if not evento %} aria-current="true"{% endif %}>+ Nuevo evento</a>
+    {% for e in eventos %}
+    <a class="tab-evento" href="{% url 'recetas:calcular_evento' e.pk %}"{% if evento and evento.pk == e.pk %} aria-current="true"{% endif %}>{{ e.nombre }}{% if e.fecha %} <small>{{ e.fecha|date:"j/n" }}</small>{% endif %}</a>
+    {% endfor %}
+  </nav>
+
+  <form method="post" action="" id="evento-form">
     {% csrf_token %}
+    <input type="hidden" name="estructura" id="ev-estructura">
+    {% with e=borrador|default:evento %}
     <div class="evento-grid">
       <!-- Datos y menú -->
       <div class="evento-form">
@@ -30,62 +38,74 @@ El cálculo del ticket lo hace evento.js al vuelo.
         <div class="grid-form evento-datos">
           <div class="campo ancho">
             <label for="ev-nombre">Nombre</label>
-            <input type="text" id="ev-nombre" name="nombre" value="{{ evento.nombre|default:'' }}" placeholder="Ej.: Almuerzo del domingo">
+            <input type="text" id="ev-nombre" name="nombre" value="{{ e.nombre }}" placeholder="Ej.: Cumpleaños de 25 personas" required>
           </div>
           <div class="campo">
             <label for="ev-fecha">Fecha</label>
-            <input type="date" id="ev-fecha" name="fecha" value="{{ evento.fecha|date:'Y-m-d' }}">
+            <input type="date" id="ev-fecha" name="fecha" value="{% if borrador %}{{ borrador.fecha }}{% else %}{{ evento.fecha|date:'Y-m-d' }}{% endif %}">
           </div>
           <div class="campo">
             <label for="ev-invitados">Invitados</label>
-            <input type="number" id="ev-invitados" name="invitados" min="1" max="500" value="{{ evento.invitados|default:10 }}">
+            <input type="number" id="ev-invitados" name="invitados" min="1" max="100000" value="{% if e %}{{ e.invitados }}{% else %}10{% endif %}">
           </div>
           <div class="campo">
-            <label for="ev-margen">Margen extra</label>
-            {% with m=evento.margen|default:10 %}
-            <select id="ev-margen" name="margen">
-              <option value="0"{% if m == 0 %} selected{% endif %}>Sin margen</option>
-              <option value="10"{% if m == 10 %} selected{% endif %}>10 %</option>
-              <option value="15"{% if m == 15 %} selected{% endif %}>15 %</option>
-              <option value="20"{% if m == 20 %} selected{% endif %}>20 %</option>
-            </select>
-            {% endwith %}
+            <label for="ev-margen">Margen extra (%)</label>
+            <input type="number" id="ev-margen" name="margen" min="0" max="1000" list="ev-margenes" value="{% if e %}{{ e.margen }}{% else %}10{% endif %}">
+            <datalist id="ev-margenes"><option value="0"><option value="10"><option value="15"><option value="20"><option value="50"><option value="100"></datalist>
+          </div>
+        </div>
+        <p class="nota">El margen es libre: 0 prepara justo lo previsto y 100 prepara el doble.</p>
+
+        <h3>Menú</h3>
+        {% if not recetas %}<p class="vacio">Primero cargá algunas recetas para poder armar el menú. <a href="{% url 'recetas:crear' %}">Nueva receta</a>.</p>{% endif %}
+        <div id="menu-editor">
+          <div id="fases"></div>
+          <div class="menu-acciones">
+            <button type="button" class="btn ghost" data-accion="agregar-fase">+ Agregar fase</button>
+            <button type="button" class="btn ghost" data-accion="fases-tipicas">Entrada, plato principal y postre</button>
           </div>
         </div>
 
-        <h3>Menú <span class="prog" id="ev-menu-conteo">0 recetas</span></h3>
-        <ul class="menu-lista">
-          {% for r in recetas %}
-          <li><label class="menu-op"><input type="checkbox" name="recetas" value="{{ r.pk }}"{% if r.pk in seleccionadas %} checked{% endif %}><span class="caja"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span class="menu-nom">{{ r.titulo }}</span><span class="menu-meta">{{ r.categoria|default:"Sin categoría" }} · rinde {{ r.porciones }}</span></label></li>
-          {% empty %}
-          <li class="vacio">Todavía no hay recetas cargadas.</li>
-          {% endfor %}
-        </ul>
-        <p class="nota">Se calcula una porción de cada receta por invitado, más el margen extra.</p>
+        <div class="evento-acciones">
+          <button class="btn" type="submit" name="accion" value="guardar">Guardar evento</button>
+          <button class="btn ghost" type="submit" name="accion" value="a_lista">Guardar y armar la lista de compras</button>
+          {% if evento %}<a class="btn ghost peligro" href="{% url 'recetas:evento_eliminar' evento.pk %}">Eliminar evento</a>{% endif %}
+        </div>
       </div>
 
       <!-- Resultado -->
-      <aside class="ticket" aria-label="Resultado del cálculo">
+      <aside class="ticket" aria-label="Qué hay que comprar">
         <h3>Para comprar</h3>
-        <p class="ticket-ev" id="ev-titulo"></p>
-        <p class="ticket-res" id="ev-res"></p>
-        <ul class="ticket-lista" id="ev-lista"></ul>
-        <p class="vacio" id="ev-vacio" hidden>Elegí al menos una receta y poné cuántos invitados son.</p>
-        <dl class="ev-totales" id="ev-totales">
-          <div><dt>Total estimado</dt><dd id="ev-total">$ 0</dd></div>
-          <div class="fuerte"><dt>Por invitado</dt><dd id="ev-por-invitado">$ 0</dd></div>
-        </dl>
-        <p class="nota">Los precios salen de los ingredientes cargados.</p>
-        <div class="ticket-acciones">
-          <button class="btn ghost" type="submit" name="accion" value="guardar">Guardar evento</button>
-          <button class="btn" type="submit" name="accion" value="a_lista">Pasar a la lista de compras</button>
-        </div>
+        {% if resultado %}
+          <p class="ticket-ev">{{ evento.nombre }}{% if evento.fecha %} · {{ evento.fecha|date:"l j \d\e F" }}{% endif %}</p>
+          <p class="ticket-res">{{ evento.invitados }} invitados · margen {{ evento.margen }} %</p>
+          <ul class="ticket-lista">
+            {% for l in resultado.lineas %}
+            <li><span class="ev-nom">{{ l.nombre }}</span><span class="ev-cant">{{ l.cantidad|floatformat:"-2" }} {{ l.unidad }}</span><span class="ev-precio">{% if l.precio is None %}—{% else %}$ {{ l.precio|floatformat:"0g" }}{% endif %}</span></li>
+            {% empty %}
+            <li class="vacio">El menú todavía no tiene recetas.</li>
+            {% endfor %}
+          </ul>
+          <dl class="ev-totales">
+            <div><dt>Total estimado</dt><dd>$ {{ resultado.total|floatformat:"0g" }}</dd></div>
+            <div class="fuerte"><dt>Por invitado</dt><dd>$ {{ resultado.por_persona|floatformat:"0g" }}</dd></div>
+          </dl>
+          {% if resultado.sin_precio %}<p class="nota">{{ resultado.sin_precio }} ingrediente{{ resultado.sin_precio|pluralize }} sin precio de referencia: no suma{{ resultado.sin_precio|pluralize:"n" }} al total.</p>{% endif %}
+          <p class="nota">El costo se estima por envases enteros, con el producto de referencia de cada ingrediente.</p>
+        {% else %}
+          <p class="vacio">Guardá el evento para ver qué hay que comprar.</p>
+        {% endif %}
       </aside>
     </div>
+    {% endwith %}
   </form>
 </article>
 
-{{ datos_recetas|json_script:"datos-recetas" }}
+{{ estructura|json_script:"datos-estructura" }}
+<template id="evento-recetas-tpl">
+  <option value="">Elegí una receta</option>
+  {% for r in recetas %}<option value="{{ r.pk }}">{{ r.titulo }}{% if r.categoria %} · {{ r.categoria }}{% endif %}</option>{% endfor %}
+</template>
 {% endblock %}
 
 {% block extra_js %}<script src="{% static 'recetas/js/evento.js' %}"></script>{% endblock %}

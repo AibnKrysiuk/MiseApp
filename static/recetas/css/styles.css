@@ -101,7 +101,7 @@ input:checked ~ .txt{background-size:100% 1.5px;opacity:.45}
 .campo{display:flex;flex-direction:column;gap:6px}
 .campo.ancho{grid-column:1/-1}
 .campo label{font-family:var(--sans);font-size:.8rem;font-weight:500;color:var(--ink-soft)}
-input[type=text],input[type=number],textarea,select{font:inherit;font-family:var(--body);font-size:1rem;color:var(--ink);width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--line);padding:8px 2px;transition:border-color .2s}
+input[type=text],input[type=number],input[type=date],textarea,select{font:inherit;font-family:var(--body);font-size:1rem;color:var(--ink);width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--line);padding:8px 2px;transition:border-color .2s}
 select{background:var(--paper)}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--terracota)}
 .con-error input,.con-error textarea,.con-error select{border-color:var(--rojo)}

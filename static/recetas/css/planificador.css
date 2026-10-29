@@ -1,7 +1,8 @@
 /* ============================================================
    planificador.css — estilos específicos de "Planificador semanal"
    Se carga DESPUÉS de styles.css y reutiliza sus variables.
-   El color de cada comida viene de la categoría (style="--c:..." en la plantilla).
+   Cada turno tiene opciones y cada opción tiene platos; el color de cada
+   plato viene de su categoría (data-color, que aplica colores.js).
    ============================================================ */
 
 /* Navegación de semana */
@@ -10,7 +11,7 @@
 .semana-rango{font-family:var(--serif);font-size:1.25rem;font-style:italic;text-align:center}
 
 /* Un día = una fila de agenda */
-.dia{display:grid;grid-template-columns:78px 1fr;gap:18px;padding:14px 0;border-bottom:1px solid var(--line)}
+.dia{display:grid;grid-template-columns:78px 1fr;gap:18px;padding:16px 0;border-bottom:1px solid var(--line)}
 .dia:first-of-type{border-top:1.5px solid var(--rule)}
 .dia-fecha{display:flex;flex-direction:column;align-items:center;gap:2px;padding-top:2px}
 .dia-nombre{font-family:var(--sans);font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
@@ -19,49 +20,66 @@
 .dia.hoy .dia-num{background:var(--terracota);color:#fff}
 .dia.hoy .dia-nombre{color:var(--terracota)}
 
-/* Comidas del día */
-.dia-slots{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.slot{--c:var(--ink-soft);position:relative;min-height:84px;background:var(--paper);border-radius:4px 10px 4px 10px}
+/* Turnos del día */
+.dia-turnos{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.turno{display:flex;flex-direction:column;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:4px 10px 4px 10px;padding:12px 14px}
 .slot-turno{font-family:var(--sans);font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
 
-.slot.lleno{--c:var(--terracota);display:flex;flex-direction:column;gap:4px;padding:11px 34px 11px 16px;border:1px solid var(--line);border-left:5px solid var(--c);
-  box-shadow:0 1px 2px rgba(60,40,20,.05),0 6px 14px -10px rgba(60,40,20,.25)}
-.slot-receta{font-family:var(--serif);font-size:1.15rem;line-height:1.2;color:var(--ink);text-decoration:none}
-.slot-receta:hover{color:var(--terracota)}
-.slot-meta{font-family:var(--sans);font-size:.75rem;color:var(--ink-soft)}
-.slot-quitar-form{display:contents}
-.slot-quitar{position:absolute;top:6px;right:6px;width:24px;height:24px;border:none;border-radius:50%;background:transparent;
-  font:inherit;font-size:1.15rem;line-height:1;color:var(--ink-soft);cursor:pointer;opacity:0;transition:opacity .2s,background .2s,color .2s}
-.slot.lleno:hover .slot-quitar,.slot-quitar:focus-visible{opacity:1}
-.slot-quitar:hover{background:rgba(168,51,26,.12);color:var(--rojo)}
-@media(hover:none){.slot-quitar{opacity:1}}
+/* Opciones de un turno */
+.opcion{background:var(--paper-2);border-radius:4px 8px 4px 8px;padding:10px 12px}
+.opcion-cab{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.opcion-num{font-family:var(--serif);font-style:italic;font-size:.95rem;color:var(--terracota)}
+.opcion-nota{font-family:var(--sans);font-size:.7rem;font-weight:500;color:var(--ink-soft);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.opcion-acciones{margin-left:auto;display:flex;align-items:center;gap:2px}
+.opcion-acciones form{display:contents}
+.opcion-acciones button{font:inherit;font-family:var(--sans);font-size:.74rem;font-weight:500;color:var(--ink-soft);background:none;border:none;border-radius:999px;padding:3px 9px;cursor:pointer;transition:color .2s,background .2s}
+.opcion-editar:hover{color:var(--terracota);background:rgba(200,90,50,.08)}
+.opcion-quitar:hover{color:var(--rojo);background:rgba(168,51,26,.1)}
 
-/* Comida vacía: botón punteado */
-.slot.vacio{border:0}
-.slot-mas{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px;width:100%;height:100%;min-height:84px;padding:11px 16px;
-  font:inherit;text-align:left;cursor:pointer;color:var(--ink-soft);background:transparent;border:1.5px dashed var(--line);border-radius:4px 10px 4px 10px;
+/* Platos de una opción */
+.platos{list-style:none;padding:0;display:flex;flex-direction:column;gap:6px}
+.plato{--c:var(--terracota);display:flex;flex-direction:column;gap:1px;padding-left:10px;border-left:4px solid var(--c)}
+.plato a{font-family:var(--serif);font-size:1.05rem;line-height:1.25;color:var(--ink);text-decoration:none}
+.plato a:hover{color:var(--terracota)}
+.plato-meta{font-family:var(--sans);font-size:.72rem;color:var(--ink-soft)}
+
+/* Agregar opción */
+.opcion-nueva{font:inherit;font-family:var(--sans);font-size:.85rem;font-weight:500;color:var(--ink-soft);cursor:pointer;text-align:left;
+  background:transparent;border:1.5px dashed var(--line);border-radius:4px 10px 4px 10px;padding:9px 14px;
   transition:border-color .2s,color .2s,background .2s}
-.slot-mas-txt{font-family:var(--sans);font-size:.85rem;font-weight:500}
-.slot-mas:hover{border-color:var(--terracota);color:var(--terracota);background:rgba(200,90,50,.04)}
+.opcion-nueva:hover{border-color:var(--terracota);color:var(--terracota);background:rgba(200,90,50,.04)}
 
 /* Pie de la semana */
-.plan-pie{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:26px}
-.plan-conteo{font-family:var(--sans);font-size:.88rem;color:var(--ink-soft)}
-.plan-pie .acciones-fila{margin-bottom:0}
+.plan-pie{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:28px}
+.plan-conteo{font-family:var(--sans);font-size:.88rem;color:var(--ink-soft);padding-bottom:10px}
+.plan-pie-acciones{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.plan-lista{display:flex;align-items:flex-end;gap:12px}
+.plan-lista .campo{width:150px}
+.plan-lista input{text-align:center}
 
-/* Cuadro para elegir receta */
+/* Cuadro para crear o editar una opción */
 .plan-dialogo{border:1px solid var(--line);border-radius:4px 14px 4px 14px;background:var(--paper);color:var(--ink);
-  padding:28px clamp(20px,4vw,32px);width:min(420px,calc(100% - 32px));margin:auto;
+  padding:28px clamp(20px,4vw,32px);width:min(480px,calc(100% - 32px));margin:auto;
   box-shadow:0 2px 4px rgba(60,40,20,.08),0 24px 48px -12px rgba(60,40,20,.35)}
 .plan-dialogo::backdrop{background:rgba(43,43,43,.4)}
 .plan-dialogo h3{margin-top:0;margin-bottom:4px;font-size:1.6rem}
 .plan-dialogo-sub{font-family:var(--sans);font-size:.85rem;color:var(--terracota);font-weight:600;margin-bottom:20px}
-.plan-dialogo .campo{margin-bottom:22px}
-.plan-dialogo .acciones-fila.fin{margin-bottom:0;margin-top:8px}
+.plan-dialogo .campo{margin-bottom:18px}
+.plan-platos-titulo{font-family:var(--sans);font-size:.8rem;font-weight:500;color:var(--ink-soft);margin-bottom:8px}
+.plato-fila{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.plato-fila select{flex:1}
+.plato-quitar{flex:none;width:26px;height:26px;border:none;border-radius:50%;background:transparent;font:inherit;font-size:1.15rem;line-height:1;color:var(--ink-soft);cursor:pointer}
+.plato-quitar:hover{background:rgba(168,51,26,.12);color:var(--rojo)}
+.link-btn{font:inherit;font-family:var(--sans);font-size:.82rem;font-weight:500;background:none;border:none;padding:4px 0;color:var(--terracota);cursor:pointer}
+.link-btn:hover{text-decoration:underline}
+.plan-dialogo .acciones-fila.fin{margin-bottom:0;margin-top:18px}
 
 /* Móvil */
+@media(max-width:700px){
+  .dia-turnos{grid-template-columns:1fr}
+}
 @media(max-width:560px){
   .dia{grid-template-columns:1fr;gap:10px}
   .dia-fecha{flex-direction:row;align-items:center;gap:10px}
-  .dia-slots{grid-template-columns:1fr}
+  .plan-pie-acciones,.plan-lista{width:100%}
 }

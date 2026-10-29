@@ -26,17 +26,18 @@
 
     <div class="acciones-col">
       <a class="btn" href="{% url 'recetas:crear' %}">Nueva receta</a>
+      <a class="btn ghost" href="{% url 'recetas:calcular_evento' %}"{% if nav == 'calcular_evento' %} aria-current="page"{% endif %}>Calcular evento</a>
+      <a class="btn ghost" href="{% url 'recetas:planificador' %}"{% if nav == 'planificador' %} aria-current="page"{% endif %}>Planificador semanal</a>
+      <a class="btn ghost" href="{% url 'recetas:lista_compras' %}"{% if nav == 'lista_compras' %} aria-current="page"{% endif %}>Lista de compras</a>
+      <a class="btn ghost" href="{% url 'recetas:notas' %}"{% if nav == 'notas' %} aria-current="page"{% endif %}>Notas</a>
+      <hr class="sep">
       <a class="btn ghost" href="{% url 'recetas:ingredientes' %}">Ingredientes</a>
       <a class="btn ghost" href="{% url 'recetas:verificar_url' %}">Semáforo de URLs</a>
-      <hr class="sep">
       <details class="herramientas"{% if nav == 'temporizador' or nav == 'cronometro' or nav == 'opciones' %} open{% endif %}>
         <summary class="btn ghost">Herramientas</summary>
         <ul class="submenu">
           {# Cronómetro y Opciones todavía no tienen vista: cuando existan, cambiar "#" por {% url 'recetas:cronometro' %} y {% url 'recetas:opciones' %} #}
-          <li><a href="{% url 'recetas:calcular_evento' %}"{% if nav == 'calcular_evento' %} aria-current="page"{% endif %}>Calcular evento</a></li>
-          <li><a href="{% url 'recetas:planificador' %}"{% if nav == 'planificador' %} aria-current="page"{% endif %}>Planificador semanal</a></li>
-          <li><a href="{% url 'recetas:lista_compras' %}"{% if nav == 'lista_compras' %} aria-current="page"{% endif %}>Lista de compras</a></li>
-          <li><a href="{% url 'recetas:notas' %}"{% if nav == 'notas' %} aria-current="page"{% endif %}>Notas</a></li>
+          <li><a href="#"{% if nav == 'cronometro' %} aria-current="page"{% endif %}>Cronómetro</a></li>
           <li><a href="{% url 'recetas:temporizador' %}"{% if nav == 'temporizador' %} aria-current="page"{% endif %}>Temporizador</a></li>
           <li><a href="#"{% if nav == 'opciones' %} aria-current="page"{% endif %}>Opciones de la app</a></li>
         </ul>
@@ -58,6 +59,7 @@
   </main>
 </div>
 <script src="{% static 'recetas/js/reloj.js' %}"></script>
+<script src="{% static 'recetas/js/colores.js' %}"></script>
 <script src="{% static 'recetas/js/mise.js' %}"></script>
 {% block extra_js %}{% endblock %}
 </body>

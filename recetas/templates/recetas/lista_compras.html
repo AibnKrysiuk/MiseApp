@@ -1,15 +1,17 @@
 {% extends 'recetas/base.html' %}
 {% load static l10n %}
 {% comment %}
-Contexto esperado:
-  grupos              lista de secciones: cada una con nombre, subtotal e items
-                      item: pk, nombre, cantidad (número), unidad, origen (texto corto), precio, comprado (bool)
-  total_items         cantidad total de ítems
-  recetas_incluidas   recetas que alimentan la lista (pk, titulo)
-  recetas_disponibles recetas que se pueden sumar (pk, titulo)
-Formularios: todos envían POST a esta misma URL con un campo "accion":
-  agregar (item, cantidad) · vaciar_tildados · quitar_receta (receta) · sumar_receta (receta)
-Los ítems tildados se pueden guardar con un fetch/POST usando data-item (pk del ítem).
+Contexto esperado (lo arma la vista lista_compras):
+  lista         la lista del usuario: origen ('semana' o 'evento'), semana_inicio, porciones_por_opcion, evento
+  grupos        secciones con ítems: cada una con nombre, subtotal e items
+                ítem: pk, nombre, cantidad, unidad, origen (texto), comprado, manual, precio, sin_precio, paquetes
+  total_items   cantidad total de ítems
+  secciones     lista de (clave, nombre) para el selector de sección
+  semana_sugerida  lunes de esta semana (fecha)
+  eventos       eventos del usuario
+Formularios: POST a esta misma URL con "accion":
+  desde_semana (semana, porciones) · desde_evento (evento) · agregar (item, cantidad, seccion)
+  quitar (item) · vaciar_tildados · marcar (item, comprado; lo manda compras.js con fetch)
 {% endcomment %}
 {% block titulo %}Lista de compras · Mise{% endblock %}
 {% block extra_head %}<link rel="stylesheet" href="{% static 'recetas/css/compras.css' %}">{% endblock %}
@@ -17,7 +19,7 @@ Los ítems tildados se pueden guardar con un fetch/POST usando data-item (pk del
 {% block contenido %}
 <article class="ficha" id="compras">
   <h2>Lista de compras</h2>
-  <div class="sub">{{ total_items|default:0 }} ítem{{ total_items|pluralize }} · {{ grupos|length }} secci{{ grupos|length|pluralize:"ón,ones" }} · armada desde {{ recetas_incluidas|length }} receta{{ recetas_incluidas|length|pluralize }}</div>
+  <div class="sub">{{ total_items }} ítem{{ total_items|pluralize }} · {{ grupos|length }} secci{{ grupos|length|pluralize:"ón,ones" }}</div>
   <div class="acciones-fila">
     <button class="btn ghost" type="button" data-imprimir>Imprimir</button>
     <button class="btn ghost" type="button" data-copiar>Copiar lista</button>
@@ -29,11 +31,48 @@ Los ítems tildados se pueden guardar con un fetch/POST usando data-item (pk del
 
   <div class="compras-grid">
     <div class="compras-lista">
+      <section class="generar" aria-label="Armar la lista">
+        <h3>Armar la lista</h3>
+        <div class="generar-cols">
+          <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="desde_semana">
+            <h4>Desde la semana</h4>
+            <div class="campo"><label for="gen-semana">Semana del</label><input type="date" id="gen-semana" name="semana" value="{{ semana_sugerida|date:'Y-m-d' }}"></div>
+            <div class="campo"><label for="gen-porciones">Porciones de cada opción</label><input type="number" id="gen-porciones" name="porciones" min="1" value="{{ lista.porciones_por_opcion|default:10 }}"></div>
+            <button class="btn ghost" type="submit">Armar con la semana</button>
+          </form>
+          <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="desde_evento">
+            <h4>Desde un evento</h4>
+            {% if eventos %}
+            <div class="campo">
+              <label for="gen-evento">Evento</label>
+              <select id="gen-evento" name="evento">
+                {% for e in eventos %}<option value="{{ e.pk }}"{% if lista.evento_id == e.pk %} selected{% endif %}>{{ e.nombre }}{% if e.fecha %} · {{ e.fecha|date:"j/n" }}{% endif %}</option>{% endfor %}
+              </select>
+            </div>
+            <button class="btn ghost" type="submit">Armar con el evento</button>
+            {% else %}
+            <p class="vacio">Todavía no hay eventos. <a href="{% url 'recetas:calcular_evento' %}">Armá el primero</a>.</p>
+            {% endif %}
+          </form>
+        </div>
+        <p class="nota">Reemplaza los ítems automáticos; los que agregaste a mano se conservan.</p>
+      </section>
+
       <form class="inline-form" method="post" action="">
         {% csrf_token %}
         <input type="hidden" name="accion" value="agregar">
         <div class="campo"><label for="nuevo-item">Agregar ítem a mano</label><input type="text" id="nuevo-item" name="item" placeholder="Ej.: Servilletas" required></div>
         <div class="campo"><label for="nuevo-cant">Cantidad</label><input type="text" id="nuevo-cant" name="cantidad" placeholder="Ej.: 1 paquete"></div>
+        <div class="campo">
+          <label for="nuevo-seccion">Sección</label>
+          <select id="nuevo-seccion" name="seccion">
+            {% for clave, nombre in secciones %}<option value="{{ clave }}"{% if clave == 'otros' %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+          </select>
+        </div>
         <button class="btn" type="submit">Agregar</button>
       </form>
 
@@ -42,52 +81,40 @@ Los ítems tildados se pueden guardar con un fetch/POST usando data-item (pk del
         <h3>{{ g.nombre }} <span class="prog">$ {{ g.subtotal|floatformat:"0g" }}</span></h3>
         <ul class="checks">
           {% for it in g.items %}
-          <li><label><input type="checkbox" data-item="{{ it.pk }}" data-precio="{{ it.precio|unlocalize }}"{% if it.comprado %} checked{% endif %}><span class="caja"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span class="txt">{{ it.nombre }}</span>{% if it.origen %}<span class="origen">{{ it.origen }}</span>{% endif %}<span class="cant">{{ it.cantidad|floatformat:"-2" }} {{ it.unidad }}</span><span class="precio">$ {{ it.precio|floatformat:"0g" }}</span></label></li>
+          <li>
+            <label><input type="checkbox" data-item="{{ it.pk }}" data-precio="{{ it.precio|unlocalize }}"{% if it.sin_precio %} data-sin-precio="1"{% endif %}{% if it.comprado %} checked{% endif %}><span class="caja"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3"/></svg></span><span class="txt">{{ it.nombre }}</span>{% if it.manual %}<span class="origen">a mano</span>{% elif it.origen %}<span class="origen" title="{{ it.origen }}">{{ it.origen }}</span>{% endif %}<span class="cant">{{ it.cantidad|floatformat:"-2" }} {{ it.unidad }}</span><span class="precio"{% if it.paquetes %} title="{{ it.paquetes }} envase{{ it.paquetes|pluralize }}"{% endif %}>{% if it.sin_precio %}—{% else %}$ {{ it.precio|floatformat:"0g" }}{% endif %}</span></label>
+            {% if it.manual %}
+            <form class="item-quitar" method="post" action="">
+              {% csrf_token %}
+              <input type="hidden" name="item" value="{{ it.pk }}">
+              <button type="submit" name="accion" value="quitar" aria-label="Quitar {{ it.nombre }}">×</button>
+            </form>
+            {% endif %}
+          </li>
           {% endfor %}
         </ul>
       </section>
       {% empty %}
-      <p class="vacio">La lista está vacía. Sumá una receta o agregá un ítem a mano.</p>
+      <p class="vacio">La lista está vacía. Armala con la semana o con un evento, o agregá un ítem a mano.</p>
       {% endfor %}
     </div>
 
     <aside class="resumen" aria-label="Resumen de la compra">
       <h3>Resumen</h3>
-      <div class="avance" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="avance-fill" id="avance-fill" style="width:0"></div></div>
-      <p class="avance-txt"><span id="r-hechos">0</span> de <span id="r-total">{{ total_items|default:0 }}</span> ítems en el carrito</p>
+      <p class="origen-lista">
+        {% if lista.origen == 'semana' %}Armada con la semana del {{ lista.semana_inicio|date:"j \d\e F" }}: {{ lista.porciones_por_opcion }} porciones de cada opción.
+        {% elif lista.origen == 'evento' %}Armada para {% if lista.evento %}el evento «{{ lista.evento.nombre }}»{% else %}un evento que ya no existe{% endif %}.
+        {% else %}Todavía no armaste la lista con la semana ni con un evento.{% endif %}
+      </p>
+      <div class="avance" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="avance-fill" id="avance-fill"></div></div>
+      <p class="avance-txt"><span id="r-hechos">0</span> de <span id="r-total">{{ total_items }}</span> ítems en el carrito</p>
       <dl class="totales">
         <div><dt>Total estimado</dt><dd id="r-total-precio">$ 0</dd></div>
         <div><dt>En el carrito</dt><dd id="r-carrito">$ 0</dd></div>
         <div class="fuerte"><dt>Falta comprar</dt><dd id="r-falta">$ 0</dd></div>
       </dl>
-      <p class="nota">Los precios salen de los ingredientes cargados.</p>
-
-      <h4>Recetas incluidas</h4>
-      <ul class="chips">
-        {% for r in recetas_incluidas %}
-        <li class="chip">{{ r.titulo }}
-          <form method="post" action="">
-            {% csrf_token %}
-            <input type="hidden" name="receta" value="{{ r.pk }}">
-            <button type="submit" name="accion" value="quitar_receta" aria-label="Quitar {{ r.titulo }}">×</button>
-          </form>
-        </li>
-        {% empty %}
-        <li class="vacio">Ninguna todavía.</li>
-        {% endfor %}
-      </ul>
-      {% if recetas_disponibles %}
-      <form class="sumar-receta" method="post" action="">
-        {% csrf_token %}
-        <div class="campo">
-          <label for="add-receta">Sumar otra receta</label>
-          <select id="add-receta" name="receta">
-            {% for r in recetas_disponibles %}<option value="{{ r.pk }}">{{ r.titulo }}</option>{% endfor %}
-          </select>
-        </div>
-        <button class="btn ghost" type="submit" name="accion" value="sumar_receta">Sumar</button>
-      </form>
-      {% endif %}
+      <p class="nota" id="r-sin-precio" hidden></p>
+      <p class="nota">El costo se estima por envases enteros, con el producto de referencia de cada ingrediente.</p>
     </aside>
   </div>
 </article>

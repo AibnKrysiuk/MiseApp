@@ -13,7 +13,6 @@ Contexto esperado:
   {% for c in categorias %}
   <a class="tab" href="{% url 'recetas:index' %}?vista=indice&amp;categoria={{ c.pk }}"{% if c.color %} data-color="{{ c.color }}"{% endif %}{% if c.pk == categoria_activa or vista == 'detalle' and receta.categoria_id == c.pk %} aria-current="true"{% endif %}>{{ c.nombre }}</a>
   {% endfor %}
-  <a class="tab" href="" aria-current="false">+</a>
 </nav>
 
 {% if vista == 'indice' %}

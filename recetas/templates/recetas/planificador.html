@@ -1,15 +1,17 @@
 {% extends 'recetas/base.html' %}
 {% load static %}
 {% comment %}
-Contexto esperado:
-  inicio, fin        primer y último día de la semana (fechas)
-  anterior, siguiente  fechas de inicio de la semana anterior y la siguiente (para ?semana=AAAA-MM-DD)
-  dias               7 días: cada uno con fecha, hoy (bool), almuerzo y cena (receta o None)
-  recetas            recetas para elegir en el cuadro "Agregar comida"
-  planificadas       cantidad de comidas con receta en la semana
+Contexto esperado (lo arma la vista planificador_semanal):
+  inicio, fin            primer y último día de la semana
+  anterior, siguiente    inicio de la semana anterior y de la siguiente (para ?semana=AAAA-MM-DD)
+  dias                   7 días: fecha, hoy (bool) y turnos
+                         turno: clave, etiqueta, plan y opciones (cada opción tiene nota y platos; cada plato, una receta)
+  recetas                recetas del usuario para elegir
+  planificadas           cantidad de turnos que tienen opciones
+  porciones_por_defecto  valor inicial de "porciones de cada opción"
 Formularios: POST a esta misma URL con "accion":
-  asignar (fecha, turno, receta) · quitar (fecha, turno) · limpiar
-"turno" vale "almuerzo" o "cena". Cada categoría puede traer un color opcional (categoria.color).
+  guardar_opcion (fecha, turno, opcion opcional, nota, recetas en orden) · quitar_opcion (opcion)
+  limpiar · armar_lista (porciones)
 {% endcomment %}
 {% block titulo %}Planificador semanal · Mise{% endblock %}
 {% block extra_head %}<link rel="stylesheet" href="{% static 'recetas/css/planificador.css' %}">{% endblock %}
@@ -17,7 +19,7 @@ Formularios: POST a esta misma URL con "accion":
 {% block contenido %}
 <article class="ficha" id="planificador">
   <h2>Planificador semanal</h2>
-  <div class="sub">Qué se cocina cada día</div>
+  <div class="sub">Qué se cocina cada día: cada turno puede tener varias opciones, y cada opción varios platos</div>
 
   <div class="semana-nav">
     <a class="btn ghost" href="?semana={{ anterior|date:'Y-m-d' }}">‹ Anterior</a>
@@ -25,24 +27,61 @@ Formularios: POST a esta misma URL con "accion":
     <a class="btn ghost" href="?semana={{ siguiente|date:'Y-m-d' }}">Siguiente ›</a>
   </div>
 
+  {% if not recetas %}<p class="vacio">Primero cargá algunas recetas para poder planificar. <a href="{% url 'recetas:crear' %}">Nueva receta</a>.</p>{% endif %}
+
   {% for d in dias %}
   <section class="dia{% if d.hoy %} hoy{% endif %}" aria-label="{{ d.fecha|date:'l j \d\e F' }}">
     <header class="dia-fecha"><span class="dia-nombre">{{ d.fecha|date:"D" }}</span><span class="dia-num"{% if d.hoy %} aria-current="date"{% endif %}>{{ d.fecha|date:"j" }}</span><span class="dia-mes">{{ d.fecha|date:"M" }}</span></header>
-    <div class="dia-slots">
-      {% include 'recetas/_slot_comida.html' with fecha=d.fecha turno="almuerzo" etiqueta="Almuerzo" receta=d.almuerzo %}
-      {% include 'recetas/_slot_comida.html' with fecha=d.fecha turno="cena" etiqueta="Cena" receta=d.cena %}
+    <div class="dia-turnos">
+      {% for t in d.turnos %}
+      <div class="turno">
+        <span class="slot-turno">{{ t.etiqueta }}</span>
+        {% for o in t.opciones %}
+        <div class="opcion">
+          <div class="opcion-cab">
+            <span class="opcion-num">Opción {{ forloop.counter }}</span>
+            {% if o.nota %}<span class="opcion-nota">{{ o.nota }}</span>{% endif %}
+            <span class="opcion-acciones">
+              <button type="button" class="opcion-editar" data-opcion="{{ o.pk }}" data-nota="{{ o.nota }}" data-recetas="{% for p in o.platos.all %}{{ p.receta_id }}{% if not forloop.last %},{% endif %}{% endfor %}" data-etiqueta="{{ d.fecha|date:'l j' }} · {{ t.etiqueta }}">Editar</button>
+              <form method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="opcion" value="{{ o.pk }}">
+                <button type="submit" class="opcion-quitar" name="accion" value="quitar_opcion" aria-label="Quitar la opción {{ forloop.counter }}">Quitar</button>
+              </form>
+            </span>
+          </div>
+          <ul class="platos">
+            {% for p in o.platos.all %}
+            <li class="plato"{% if p.receta.categoria.color %} data-color="{{ p.receta.categoria.color }}"{% endif %}>
+              <a href="{% url 'recetas:detalle' p.receta_id %}">{{ p.receta.titulo }}</a>
+              <span class="plato-meta">{% if p.receta.categoria %}{{ p.receta.categoria }} · {% endif %}{{ p.receta.tiempo_preparacion_min|add:p.receta.tiempo_coccion_min }} min</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+        <button type="button" class="opcion-nueva" data-fecha="{{ d.fecha|date:'Y-m-d' }}" data-turno="{{ t.clave }}" data-etiqueta="{{ d.fecha|date:'l j' }} · {{ t.etiqueta }}" aria-label="Agregar una opción: {{ d.fecha|date:'l j' }}, {{ t.etiqueta }}">+ Agregar opción</button>
+      </div>
+      {% endfor %}
     </div>
   </section>
   {% endfor %}
 
   <footer class="plan-pie">
-    <span class="plan-conteo">{% if planificadas %}{{ planificadas }} comida{{ planificadas|pluralize }} planificada{{ planificadas|pluralize }}{% else %}Nada planificado todavía{% endif %}</span>
-    <div class="acciones-fila">
-      <form method="post" action="" data-confirmar="¿Limpiar todas las comidas de esta semana?">
+    <span class="plan-conteo">{% if planificadas %}{{ planificadas }} turno{{ planificadas|pluralize }} con opciones{% else %}Nada planificado todavía{% endif %}</span>
+    <div class="plan-pie-acciones">
+      <form method="post" action="" data-confirmar="¿Limpiar todas las opciones de esta semana?">
         {% csrf_token %}
         <button class="btn ghost peligro" type="submit" name="accion" value="limpiar">Limpiar semana</button>
       </form>
-      <a class="btn" href="#">Armar lista de compras</a>
+      <form class="plan-lista" method="post" action="">
+        {% csrf_token %}
+        <div class="campo">
+          <label for="plan-porciones">Porciones de cada opción</label>
+          <input type="number" id="plan-porciones" name="porciones" min="1" value="{{ porciones_por_defecto }}">
+        </div>
+        <button class="btn" type="submit" name="accion" value="armar_lista">Armar lista de compras</button>
+      </form>
     </div>
   </footer>
 </article>
@@ -52,20 +91,32 @@ Formularios: POST a esta misma URL con "accion":
     {% csrf_token %}
     <input type="hidden" name="fecha" id="plan-fecha">
     <input type="hidden" name="turno" id="plan-turno">
-    <h3 id="plan-dialogo-titulo">Agregar comida</h3>
+    <input type="hidden" name="opcion" id="plan-opcion">
+    <h3 id="plan-dialogo-titulo">Nueva opción</h3>
     <p class="plan-dialogo-sub" id="plan-dialogo-sub"></p>
     <div class="campo">
-      <label for="plan-receta">Receta</label>
-      <select id="plan-receta" name="receta" required>
-        {% for r in recetas %}<option value="{{ r.pk }}">{{ r.titulo }}{% if r.categoria %} · {{ r.categoria }}{% endif %}</option>{% endfor %}
-      </select>
+      <label for="plan-nota">Aclaración (opcional)</label>
+      <input type="text" id="plan-nota" name="nota" maxlength="100" placeholder="Ej.: sin gluten">
     </div>
+    <p class="plan-platos-titulo">Platos de esta opción</p>
+    <div id="plan-platos"></div>
+    <button type="button" class="link-btn" id="plan-agregar-plato">+ Agregar otro plato</button>
     <div class="acciones-fila fin">
       <button class="btn ghost" type="button" id="plan-cancelar">Cancelar</button>
-      <button class="btn" type="submit" name="accion" value="asignar">Guardar</button>
+      <button class="btn" type="submit" name="accion" value="guardar_opcion">Guardar opción</button>
     </div>
   </form>
 </dialog>
+
+<template id="plan-plato-tpl">
+  <div class="plato-fila">
+    <select name="recetas" required aria-label="Receta">
+      <option value="">Elegí una receta</option>
+      {% for r in recetas %}<option value="{{ r.pk }}">{{ r.titulo }}{% if r.categoria %} · {{ r.categoria }}{% endif %}</option>{% endfor %}
+    </select>
+    <button type="button" class="plato-quitar" aria-label="Quitar plato">×</button>
+  </div>
+</template>
 {% endblock %}
 
 {% block extra_js %}<script src="{% static 'recetas/js/planificador.js' %}"></script>{% endblock %}
